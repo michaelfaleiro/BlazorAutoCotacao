@@ -1,0 +1,202 @@
+@using BlazorAutoCotacao.Dtos.Request
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@using MudBlazor
+@using System.Linq
+@inject QuotesService QuotesService
+@inject SuppliersService SuppliersService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudAutocomplete T="GetAllSuppliersResponse"
+                             Label="Fornecedor"
+                             @bind-Value="_selectedSupplier"
+                             SearchFunc="SearchSuppliers"
+                             ToStringFunc="@(s => s?.FantasyName ?? string.Empty)"
+                             Required="true"
+                             RequiredError="Fornecedor é obrigatório"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             Disabled="_isEdit"
+                             DebounceInterval="300"
+                             ResetValueOnEmptyText="true"
+                             CoerceText="true"
+                             CoerceValue="false">
+                <ItemTemplate Context="supplier">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.body2"><strong>@supplier.FantasyName</strong></MudText>
+                        <MudText Typo="Typo.caption">@supplier.LegalName - @FormatCnpj(supplier.Cnpj)</MudText>
+                    </MudStack>
+                </ItemTemplate>
+            </MudAutocomplete>
+            
+            <MudNumericField @bind-Value="_model.Price" 
+                             Label="Preço" 
+                             Required="true"
+                             Min="0"
+                             Format="C2"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             Adornment="Adornment.Start"
+                             AdornmentIcon="@Icons.Material.Filled.AttachMoney"/>
+            
+            <MudTextField @bind-Value="_model.Brand" 
+                          Label="Marca" 
+                          Required="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
+            
+            <MudNumericField @bind-Value="_model.Quantity" 
+                             Label="Quantidade" 
+                             Required="true"
+                             Min="1"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Save" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Success"
+                   Disabled="@(!_isValid || _selectedSupplier == null || _saving)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ml-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Salvar</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid QuoteId { get; set; }
+    [Parameter] public Guid QuoteItemId { get; set; }
+    [Parameter] public Guid? SupplierPriceId { get; set; }
+    
+    private MudForm? _form;
+    private bool _isValid;
+    private bool _saving;
+    private bool _isEdit => SupplierPriceId.HasValue;
+    private GetAllSuppliersResponse? _selectedSupplier;
+    
+    private AddSupplierPriceDto _model = new()
+    {
+        QuoteId = Guid.Empty,
+        QuoteItemId = Guid.Empty,
+        SupplierId = Guid.Empty,
+        Price = 0,
+        Brand = string.Empty,
+        IsSelected = false
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        _model.QuoteId = QuoteId;
+        _model.QuoteItemId = QuoteItemId;
+
+        if (_isEdit)
+        {
+            try
+            {
+                var quote = await QuotesService.GetQuoteByIdAsync(QuoteId);
+                var item = quote.QuoteItems.FirstOrDefault(i => i.Id == QuoteItemId);
+                if (item != null)
+                {
+                    var price = item.SupplierPrices.FirstOrDefault(p => p.Id == SupplierPriceId!.Value);
+                    if (price != null)
+                    {
+                        _model.Price = price.Price;
+                        _model.Brand = price.Brand;
+                        _model.Quantity = price.Quantity;
+                        _model.IsSelected = price.IsSelected;
+                        _selectedSupplier = new GetAllSuppliersResponse
+                        {
+                            Id = price.Supplier.Id,
+                            FantasyName = price.Supplier.FantasyName
+                        };
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao carregar preço: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task<IEnumerable<GetAllSuppliersResponse>> SearchSuppliers(string value, CancellationToken token)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
+            return Array.Empty<GetAllSuppliersResponse>();
+
+        try
+        {
+            var result = await SuppliersService.GetAllSuppliersAsync(
+                search: value,
+                pageSize: 10
+            );
+            return result.Data;
+        }
+        catch
+        {
+            return Array.Empty<GetAllSuppliersResponse>();
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        if (!_isValid || _selectedSupplier == null) return;
+
+        try
+        {
+            _saving = true;
+            _model.SupplierId = _selectedSupplier.Id;
+            
+            if (_isEdit)
+            {
+                var updateDto = new UpdateSupplierPriceDto
+                {
+                    Price = _model.Price,
+                    Brand = _model.Brand,
+                    Quantity = _model.Quantity,
+                    IsSelected = _model.IsSelected
+                };
+                await QuotesService.UpdateSupplierPriceAsync(SupplierPriceId!.Value, updateDto);
+                Snackbar.Add("Preço atualizado com sucesso!", Severity.Success);
+            }
+            else
+            {
+                await QuotesService.AddSupplierPriceAsync(_model);
+                Snackbar.Add("Preço adicionado com sucesso!", Severity.Success);
+            }
+            
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar preço: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private string FormatCnpj(string cnpj)
+    {
+        if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14)
+            return cnpj;
+
+        return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
+    }
+}

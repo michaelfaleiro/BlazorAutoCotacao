@@ -1,0 +1,71 @@
+@using BlazorAutoCotacao.Dtos.Request
+@using BlazorAutoCotacao.Services
+@inject QuotesService QuotesService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Informações do Veículo</MudText>
+
+            <MudTextField @bind-Value="_model.VehicleModel" Label="Modelo" Required="true"
+                RequiredError="Modelo é obrigatório" Variant="Variant.Outlined" Margin="Margin.Dense" />
+
+            <MudTextField @bind-Value="_model.VehicleLicencePlate" Label="Placa" Required="true"
+                RequiredError="Placa é obrigatória" Variant="Variant.Outlined" Margin="Margin.Dense"
+                Mask="@(new PatternMask("AAA-0X00") { MaskChars = new[] { new MaskChar('A', @"[A-Za-z]"), new MaskChar('0', @"[0-9]"), new MaskChar('X', @"[0-9A-Ja-j]") } })" />
+            <MudTextField @bind-Value="_model.VehicleVin" Label="Chassi (VIN)" RequiredError="Chassi é obrigatório"
+                Variant="Variant.Outlined" Margin="Margin.Dense" />
+
+            <MudTextField @bind-Value="_model.VehicleYearModel" Label="Ano/Modelo" Required="true"
+                RequiredError="Ano/Modelo é obrigatório" Variant="Variant.Outlined" Margin="Margin.Dense" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Save" Variant="Variant.Filled" Color="Color.Success" Disabled="@(!_isValid || _saving)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                <MudText Class="ml-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Criar e Continuar</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private MudForm? _form;
+    private bool _isValid;
+    private bool _saving;
+
+    private CreateQuoteDto _model = new();
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        if (!_isValid) return;
+
+        try
+        {
+            _saving = true;
+            var response = await QuotesService.CreateQuoteAsync(_model);
+            Snackbar.Add("Cotação criada com sucesso!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(response.Id));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao criar cotação: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

@@ -1,0 +1,113 @@
+@using BlazorAutoCotacao.Dtos.Request
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@using MudBlazor
+@inject QuotesService QuotesService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudTextField @bind-Value="_model.VehicleModel" 
+                          Label="Modelo do Veículo" 
+                          Required="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
+            
+            <MudTextField @bind-Value="_model.VehicleLicencePlate" 
+                          Label="Placa" 
+                          Required="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Mask="@(new PatternMask("AAA-0X00") { MaskChars = new[] { new MaskChar('A', @"[A-Za-z]"), new MaskChar('0', @"[0-9]"), new MaskChar('X', @"[0-9A-Ja-j]") } })"/>
+            
+            <MudTextField @bind-Value="_model.VehicleVin" 
+                          Label="VIN/Chassi"                     
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          MaxLength="17"/>
+            
+            <MudTextField @bind-Value="_model.VehicleYearModel" 
+                          Label="Ano/Modelo" 
+                          Required="true"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Placeholder="Ex: 2024/2025"/>
+            
+            <MudSelect @bind-Value="_model.Status" 
+                       Label="Status" 
+                       Required="true"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense">
+                <MudSelectItem Value="@("Novo")">Novo</MudSelectItem>
+                <MudSelectItem Value="@("Parcial")">Parcial</MudSelectItem>
+                <MudSelectItem Value="@("Finalizado")">Finalizado</MudSelectItem>
+                <MudSelectItem Value="@("Cancelado")">Cancelado</MudSelectItem>
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Save" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Success"
+                   Disabled="@(!_isValid || _saving)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ml-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Salvar</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid QuoteId { get; set; }
+    [Parameter] public GetQuoteByIdResponse Quote { get; set; } = null!;
+    
+    private MudForm? _form;
+    private bool _isValid;
+    private bool _saving;
+    
+    private UpdateQuoteDto _model = new();
+
+    protected override void OnInitialized()
+    {
+        _model = new UpdateQuoteDto
+        {
+            VehicleModel = Quote.VehicleModel,
+            VehicleLicencePlate = Quote.VehicleLicencePlate,
+            VehicleVin = Quote.VehicleVin,
+            VehicleYearModel = Quote.VehicleYearModel,
+            Status = Quote.Status
+        };
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        if (!_isValid) return;
+
+        try
+        {
+            _saving = true;
+            await QuotesService.UpdateQuoteAsync(QuoteId, _model);
+            Snackbar.Add("Cotação atualizada com sucesso!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar cotação: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

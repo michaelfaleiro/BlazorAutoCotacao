@@ -1,0 +1,91 @@
+@using MudBlazor
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@inject SuppliersService SuppliersService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else if (_supplier != null)
+        {
+            <MudGrid>
+                <MudItem xs="12">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">ID</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@_supplier.Id</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Razão Social</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@_supplier.LegalName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Nome Fantasia</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@_supplier.FantasyName</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">CNPJ</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@FormatCnpj(_supplier.Cnpj)</MudText>
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Data de Criação</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@_supplier.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</MudText>
+                </MudItem>
+                @if (_supplier.UpdatedAt.HasValue)
+                {
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Última Atualização</MudText>
+                        <MudText Typo="Typo.body1" Class="mb-3">@_supplier.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm:ss")</MudText>
+                    </MudItem>
+                }
+            </MudGrid>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Color="Color.Primary" OnClick="Close">Fechar</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] public Guid SupplierId { get; set; }
+
+    private bool _loading = true;
+    private GetSupplierByIdResponse? _supplier;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSupplier();
+    }
+
+    private async Task LoadSupplier()
+    {
+        try
+        {
+            _loading = true;
+            _supplier = await SuppliersService.GetSupplierByIdAsync(SupplierId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar fornecedor: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void Close() => MudDialog.Close();
+
+    private string FormatCnpj(string cnpj)
+    {
+        if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14)
+            return cnpj;
+
+        return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
+    }
+}

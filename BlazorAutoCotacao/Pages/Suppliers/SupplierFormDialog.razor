@@ -1,0 +1,186 @@
+@using MudBlazor
+@using BlazorAutoCotacao.Dtos.Request
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@inject SuppliersService SuppliersService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        @if (_loading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+        }
+        else
+        {
+            <MudForm @ref="_form" @bind-IsValid="_isValid">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_model.LegalName"
+                                      Label="Razão Social"
+                                      Variant="Variant.Outlined"
+                                      Required="true"
+                                      RequiredError="Razão social é obrigatória"/>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_model.FantasyName"
+                                      Label="Nome Fantasia"
+                                      Variant="Variant.Outlined"
+                                      Required="true"
+                                      RequiredError="Nome fantasia é obrigatório"/>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField @bind-Value="_model.Cnpj"
+                                      Label="CNPJ"
+                                      Variant="Variant.Outlined"
+                                      Mask="@(new MudBlazor.PatternMask("00.000.000/0000-00"))"
+                                      Required="true"
+                                      RequiredError="CNPJ é obrigatório"
+                                      Validation="@(new Func<string, string?>(ValidateCnpj))"/>
+                    </MudItem>
+                </MudGrid>
+            </MudForm>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="@(IsEdit ? Color.Warning : Color.Success)" 
+                   Variant="Variant.Filled" 
+                   OnClick="Submit"
+                   Disabled="@(!_isValid || _saving || _loading)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true"/>
+            }
+            else
+            {
+                <text>@(IsEdit ? "Atualizar" : "Salvar")</text>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Parameter] 
+    public Guid? SupplierId { get; set; }
+
+    private MudForm _form = null!;
+    private bool _isValid;
+    private bool _saving = false;
+    private bool _loading = false;
+    private SupplierModel _model = new();
+
+    private bool IsEdit => SupplierId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEdit)
+        {
+            await LoadSupplier();
+        }
+    }
+
+    private async Task LoadSupplier()
+    {
+        try
+        {
+            _loading = true;
+            var supplier = await SuppliersService.GetSupplierByIdAsync(SupplierId!.Value);
+            
+            _model.LegalName = supplier.LegalName;
+            _model.FantasyName = supplier.FantasyName;
+            _model.Cnpj = FormatCnpj(supplier.Cnpj);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar fornecedor: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        try
+        {
+            await _form.Validate();
+
+            if (!_form.IsValid)
+                return;
+
+            _saving = true;
+
+            // Remove formatação do CNPJ
+            var cnpjClean = new string(_model.Cnpj.Where(char.IsDigit).ToArray());
+
+            if (IsEdit)
+            {
+                var dto = new UpdateSupplierDto
+                {
+                    LegalName = _model.LegalName,
+                    FantasyName = _model.FantasyName,
+                    Cnpj = cnpjClean
+                };
+                await SuppliersService.UpdateSupplierAsync(SupplierId!.Value, dto);
+                Snackbar.Add("Fornecedor atualizado com sucesso!", Severity.Success);
+            }
+            else
+            {
+                var dto = new CreateSupplierDto
+                {
+                    LegalName = _model.LegalName,
+                    FantasyName = _model.FantasyName,
+                    Cnpj = cnpjClean
+                };
+                await SuppliersService.CreateSupplierAsync(dto);
+                Snackbar.Add("Fornecedor criado com sucesso!", Severity.Success);
+            }
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao {(IsEdit ? "atualizar" : "criar")} fornecedor: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private string? ValidateCnpj(string cnpj)
+    {
+        if (string.IsNullOrWhiteSpace(cnpj))
+            return "CNPJ é obrigatório";
+
+        var digitsOnly = new string(cnpj.Where(char.IsDigit).ToArray());
+        
+        if (digitsOnly.Length != 14)
+            return "CNPJ deve conter 14 dígitos";
+
+        return null;
+    }
+
+    private string FormatCnpj(string cnpj)
+    {
+        if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14)
+            return cnpj;
+
+        return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
+    }
+
+    // Model class para o formulário
+    private class SupplierModel
+    {
+        public string LegalName { get; set; } = string.Empty;
+        public string FantasyName { get; set; } = string.Empty;
+        public string Cnpj { get; set; } = string.Empty;
+    }
+}

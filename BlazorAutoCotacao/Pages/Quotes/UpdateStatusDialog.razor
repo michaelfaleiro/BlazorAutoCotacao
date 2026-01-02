@@ -1,0 +1,79 @@
+@using BlazorAutoCotacao.Dtos.Request
+@using BlazorAutoCotacao.Services
+@using MudBlazor
+@inject QuotesService QuotesService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudSelect @bind-Value="_model.Status" 
+                       Label="Status" 
+                       Required="true"
+                       Variant="Variant.Outlined"
+                       Margin="Margin.Dense">
+                <MudSelectItem Value="@("Novo")">Novo</MudSelectItem>
+                <MudSelectItem Value="@("Parcial")">Parcial</MudSelectItem>
+                <MudSelectItem Value="@("Finalizado")">Finalizado</MudSelectItem>
+                <MudSelectItem Value="@("Cancelado")">Cancelado</MudSelectItem>
+            </MudSelect>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Save" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Primary"
+                   Disabled="@(!_isValid || _saving)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ml-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Atualizar Status</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid QuoteId { get; set; }
+    [Parameter] public string CurrentStatus { get; set; } = string.Empty;
+    
+    private MudForm? _form;
+    private bool _isValid;
+    private bool _saving;
+    
+    private UpdateQuoteStatusDto _model = new();
+
+    protected override void OnInitialized()
+    {
+        _model.Status = CurrentStatus;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        if (!_isValid) return;
+
+        try
+        {
+            _saving = true;
+            await QuotesService.UpdateQuoteStatusAsync(QuoteId, _model);
+            Snackbar.Add("Status atualizado com sucesso!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao atualizar status: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

@@ -1,0 +1,439 @@
+@page "/cotacoes/{QuoteId:guid}"
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@inject QuotesService QuotesService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+@if (_loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+}
+else if (_quote != null)
+{
+    <MudGrid>
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+                    <div style="display:flex; align-items:center;">
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+                                       Color="Color.Default"
+                                       Size="Size.Medium"
+                                       OnClick="GoBack"
+                                       Title="Voltar" />
+                        <div style="margin-left:8px;">
+                            <MudText Typo="Typo.h5">Cotação #@_quote.Id.ToString().Substring(0, 8)</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                            Criado em @_quote.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            @if (_quote.UpdatedAt != null)
+                            {
+                                <span> • Atualizado em @_quote.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                            }
+                        </MudText>
+                    </div>
+                    </div>
+                    <MudStack Row="true" Spacing="2">
+                        <MudTooltip Text="Ver Resumo">
+                            <MudIconButton Icon="@Icons.Material.Filled.Summarize"
+                                           Color="Color.Info"
+                                           Size="Size.Medium"
+                                           OnClick="NavigateToSummary"/>
+                        </MudTooltip>
+                        <MudTooltip Text="Alterar Status">
+                            <MudIconButton Icon="@Icons.Material.Filled.ChangeCircle"
+                                           Color="Color.Primary"
+                                           Size="Size.Medium"
+                                           OnClick="OpenUpdateStatusDialog"/>
+                        </MudTooltip>
+                        <MudTooltip Text="Editar Cotação">
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Warning"
+                                           Size="Size.Medium"
+                                           OnClick="OpenEditQuoteDialog"/>
+                        </MudTooltip>
+                        <MudChip T="string" Color="@GetStatusColor(_quote.Status)" Size="Size.Medium">@_quote.Status</MudChip>
+                    </MudStack>
+                </MudStack>
+                
+                <MudDivider Class="mb-3"/>
+                
+                <MudGrid Spacing="2">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Dark">Modelo</MudText>
+                        <MudText Typo="Typo.body2">@_quote.VehicleModel.ToUpper()</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Dark">Placa</MudText>
+                        <MudText Typo="Typo.body2">@_quote.VehicleLicencePlate.ToUpper()</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Dark">Chassi</MudText>
+                        <MudText Typo="Typo.body2">@_quote.VehicleVin</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudText Typo="Typo.caption" Color="Color.Dark">Ano/Modelo</MudText>
+                        <MudText Typo="Typo.body2">@_quote.VehicleYearModel</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-3" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6">Itens da Cotação</MudText>
+                    <MudButton Variant="Variant.Filled" 
+                               Color="Color.Primary" 
+                               StartIcon="@Icons.Material.Filled.Add"
+                               OnClick="OpenAddItemDialog"
+                               Size="Size.Small">
+                        Adicionar Item
+                    </MudButton>
+                </MudStack>
+
+                <MudTable T="QuoteItemResponse"
+                          Items="_quote.QuoteItems"
+                          Dense="true"
+                          Hover="true"
+                          Bordered="false"
+                          Striped="true"
+                          Breakpoint="Breakpoint.Sm"
+                          FixedHeader="true">
+                    <HeaderContent>
+                        <MudTh></MudTh>
+                        <MudTh>Item</MudTh>
+                        <MudTh>Quantidade</MudTh>
+                        <MudTh Class="d-none d-sm-table-cell">Criado em</MudTh>
+                        <MudTh Style="text-align: right;">Ações</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="">
+                            <MudIconButton Icon="@(_expandedItems.Contains(context.Id) ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown)"
+                                           Size="Size.Small"
+                                           OnClick="@(() => ToggleExpand(context.Id))"/>
+                        </MudTd>
+                        <MudTd DataLabel="Item">
+                            <MudText Typo="Typo.body2">@context.Name</MudText>
+                            @if (context.SupplierPrices.Any())
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Info">@context.SupplierPrices.Count preços</MudText>
+                            }
+                        </MudTd>
+                        <MudTd DataLabel="Quantidade">
+                            <MudText Typo="Typo.body2"><strong>@context.Quantity</strong></MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Criado em" Class="d-none d-sm-table-cell">
+                            @context.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </MudTd>
+                        <MudTd DataLabel="Ações" Style="text-align: right;">
+                            <MudTooltip Text="Adicionar Preço">
+                                <MudIconButton Icon="@Icons.Material.Filled.AttachMoney"
+                                               Size="Size.Small"
+                                               Color="Color.Success"
+                                               OnClick="@(() => OpenAddPriceDialog(context.Id))"/>
+                            </MudTooltip>
+                            <MudTooltip Text="Editar">
+                                <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                               Size="Size.Small"
+                                               Color="Color.Warning"
+                                               OnClick="@(() => OpenEditItemDialog(context.Id))"/>
+                            </MudTooltip>
+                        </MudTd>
+                    </RowTemplate>
+                    <ChildRowContent>
+                        @if (_expandedItems.Contains(context.Id))
+                        {
+                            var quoteItemId = context.Id;
+                            <MudTr>
+                                <td colspan="5" style="padding: 0;">
+                                    @if (context.SupplierPrices.Any())
+                                    {
+                                        <MudPaper Elevation="0" Class="pa-3" Style="background-color: var(--mud-palette-background-grey);">
+                                            <MudText Typo="Typo.subtitle2" Class="mb-2">Preços dos Fornecedores</MudText>
+                                            <MudTable T="SupplierPriceResponse"
+                                                      Items="context.SupplierPrices"
+                                                      Dense="true"
+                                                      Hover="true"
+                                                      Bordered="true"
+                                                      Striped="false"
+                                                      Breakpoint="Breakpoint.Xs">
+                                                <HeaderContent>
+                                                    <MudTh>Fornecedor</MudTh>
+                                                    <MudTh Class="d-none d-sm-table-cell">Marca</MudTh>
+                                                    <MudTh>Quantidade</MudTh>
+                                                    <MudTh>Preço</MudTh>
+                                                    <MudTh Style="text-align: right;">Ações</MudTh>
+                                                </HeaderContent>
+                                                <RowTemplate Context="price">
+                                                    <MudTd DataLabel="Fornecedor">
+                                                        <MudText Typo="Typo.body2">@price.Supplier.FantasyName</MudText>
+                                                        <MudText Typo="Typo.caption" Class="d-sm-none">@price.Brand</MudText>
+                                                    </MudTd>
+                                                    <MudTd DataLabel="Marca" Class="d-none d-sm-table-cell">@price.Brand</MudTd>
+                                                    <MudTd DataLabel="Quantidade">
+                                                        <MudText Typo="Typo.body2"><strong>@price.Quantity</strong></MudText>
+                                                    </MudTd>
+                                                    <MudTd DataLabel="Preço">
+                                                        <MudText Typo="Typo.body2" Color="Color.Success"><strong>@price.Price.ToString("C")</strong></MudText>
+                                                    </MudTd>
+                                                    <MudTd DataLabel="Ações" Style="text-align: right;">
+                                                        @if (price.IsSelected)
+                                                        {
+                                                            <MudIconButton Icon="@Icons.Material.Filled.RemoveShoppingCart"
+                                                                           Size="Size.Small"
+                                                                           Color="Color.Error"
+                                                                           Variant="Variant.Filled"
+                                                                           OnClick="@(() => SelectWinner(price.Id))"
+                                                                           Title="Remover seleção"/>
+                                                        }
+                                                        else
+                                                        {
+                                                            <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart"
+                                                                           Size="Size.Small"
+                                                                           Color="Color.Success"
+                                                                           Variant="Variant.Filled"
+                                                                           OnClick="@(() => SelectWinner(price.Id))"
+                                                                           Title="Selecionar como vencedor"/>
+                                                        }
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                                                       Size="Size.Small"
+                                                                       Color="Color.Warning"
+                                                                       OnClick="@(() => OpenEditPriceDialog(quoteItemId, price))"/>
+                                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                                       Size="Size.Small"
+                                                                       Color="Color.Error"
+                                                                       OnClick="@(() => DeletePrice(price.Id))"/>
+                                                    </MudTd>
+                                                </RowTemplate>
+                                            </MudTable>
+                                        </MudPaper>
+                                    }
+                                    else
+                                    {
+                                        <MudAlert Severity="Severity.Info" Class="ma-3" Dense="true">
+                                            Nenhum preço cadastrado para este item.
+                                        </MudAlert>
+                                    }
+                                </td>
+                            </MudTr>
+                        }
+                    </ChildRowContent>
+                </MudTable>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public Guid QuoteId { get; set; }
+
+    private GetQuoteByIdResponse? _quote;
+    private bool _loading = true;
+    private HashSet<Guid> _expandedItems = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadQuote();
+    }
+
+    private void ToggleExpand(Guid itemId)
+    {
+        if (_expandedItems.Contains(itemId))
+        {
+            _expandedItems.Remove(itemId);
+        }
+        else
+        {
+            _expandedItems.Add(itemId);
+        }
+    }
+
+    private void NavigateToSummary()
+    {
+        Navigation.NavigateTo($"/cotacoes/{QuoteId}/resumo");
+    }
+
+    private void GoBack()
+    {
+        Navigation.NavigateTo("/cotacoes");
+    }
+
+    private async Task LoadQuote()
+    {
+        try
+        {
+            _loading = true;
+            _quote = await QuotesService.GetQuoteByIdAsync(QuoteId);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar cotação: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenEditQuoteDialog()
+    {
+        if (_quote == null) return;
+
+        var parameters = new DialogParameters<EditQuoteDialog>
+        {
+            { x => x.QuoteId, QuoteId },
+            { x => x.Quote, _quote }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<EditQuoteDialog>("Editar Cotação", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadQuote();
+        }
+    }
+
+    private async Task OpenUpdateStatusDialog()
+    {
+        if (_quote == null) return;
+
+        var parameters = new DialogParameters<UpdateStatusDialog>
+        {
+            { x => x.QuoteId, QuoteId },
+            { x => x.CurrentStatus, _quote.Status }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<UpdateStatusDialog>("Alterar Status", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadQuote();
+        }
+    }
+
+    private async Task OpenAddItemDialog()
+    {
+        var parameters = new DialogParameters<QuoteItemFormDialog>
+        {
+            { x => x.QuoteId, QuoteId }
+        };
+        
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<QuoteItemFormDialog>("Adicionar Item", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadQuote();
+        }
+    }
+
+    private async Task OpenEditItemDialog(Guid itemId)
+    {
+        var parameters = new DialogParameters<QuoteItemFormDialog>
+        {
+            { x => x.QuoteId, QuoteId },
+            { x => x.QuoteItemId, itemId }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<QuoteItemFormDialog>("Editar Item", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadQuote();
+        }
+    }
+
+    private async Task OpenAddPriceDialog(Guid quoteItemId)
+    {
+        var parameters = new DialogParameters<SupplierPriceFormDialog>
+        {
+            { x => x.QuoteId, QuoteId },
+            { x => x.QuoteItemId, quoteItemId }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SupplierPriceFormDialog>("Adicionar Preço de Fornecedor", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadQuote();
+        }
+    }
+
+    private async Task OpenEditPriceDialog(Guid quoteItemId, SupplierPriceResponse price)
+    {
+        var parameters = new DialogParameters<SupplierPriceFormDialog>
+        {
+            { x => x.QuoteId, QuoteId },
+            { x => x.QuoteItemId, quoteItemId },
+            { x => x.SupplierPriceId, price.Id }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SupplierPriceFormDialog>("Editar Preço de Fornecedor", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadQuote();
+        }
+    }
+
+    private async Task SelectWinner(Guid supplierPriceId)
+    {
+        try
+        {
+            await QuotesService.SelectWinnerAsync(supplierPriceId);
+            Snackbar.Add("Fornecedor vencedor selecionado!", Severity.Success);
+            await LoadQuote();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao selecionar vencedor: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeletePrice(Guid supplierPriceId)
+    {
+        bool? confirmed = await DialogService.ShowMessageBox(
+            "Confirmar exclusão",
+            "Tem certeza que deseja excluir este preço?",
+            yesText: "Excluir",
+            cancelText: "Cancelar");
+
+        if (confirmed == true)
+        {
+            try
+            {
+                await QuotesService.DeleteSupplierPriceAsync(supplierPriceId);
+                Snackbar.Add("Preço excluído com sucesso!", Severity.Success);
+                await LoadQuote();
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao excluir preço: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pendente" => Color.Warning,
+            "aprovada" => Color.Success,
+            "rejeitada" => Color.Error,
+            "cancelada" => Color.Default,
+            _ => Color.Info
+        };
+    }
+}

@@ -1,0 +1,214 @@
+@page "/fornecedores"
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@using MudBlazor
+@inject SuppliersService SuppliersService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudText Typo="Typo.h4" Class="mb-4">Fornecedores</MudText>
+
+<MudPaper Class="pa-4" Elevation="2">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-3">
+        <MudTextField @bind-Value="_searchString" 
+                      Placeholder="Buscar por razão social, nome fantasia ou CNPJ..." 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      IconSize="Size.Medium"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Style="max-width: 400px;"
+                      DebounceInterval="800"
+                      OnDebounceIntervalElapsed="OnSearch"
+                      Immediate="false"
+                      Clearable="true"/>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Success" 
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCreateDialog"
+                   Size="Size.Small">
+            Novo Fornecedor
+        </MudButton>
+    </MudStack>
+
+    <MudDataGrid T="GetAllSuppliersResponse" 
+                 ServerData="LoadServerData"
+                 Dense="true"
+                 Hover="true"
+                 Bordered="false"
+                 Striped="false"
+                 @ref="_dataGrid"
+                 SortMode="SortMode.Single"
+                 Filterable="false"
+                 Hideable="false"
+                 RowsPerPage="25">
+        <Columns>
+            <PropertyColumn Property="x => x.LegalName" Title="Razão Social" Sortable="true"/>
+            <PropertyColumn Property="x => x.FantasyName" Title="Nome Fantasia" Sortable="true"/>
+            <TemplateColumn Title="CNPJ" Sortable="true" SortBy="@(x => x.Cnpj)">
+                <CellTemplate>
+                    @FormatCnpj(context.Item.Cnpj)
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Data de Criação" Sortable="true" SortBy="@(x => x.CreatedAt)">
+                <CellTemplate>
+                    @context.Item.CreatedAt.ToString("dd/MM/yyyy")
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Ações" Sortable="false" Filterable="false" Hideable="false" 
+                           HeaderStyle="text-align: right; width: 120px;" 
+                           CellStyle="text-align: right;">
+                <CellTemplate>
+                    <MudTooltip Text="Visualizar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                       Size="Size.Small" 
+                                       Color="Color.Info"
+                                       OnClick="@(() => OpenDetailsDialog(context.Item.Id))"/>
+                    </MudTooltip>
+                    <MudTooltip Text="Editar">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                       Size="Size.Small" 
+                                       Color="Color.Warning"
+                                       OnClick="@(() => OpenEditDialog(context.Item.Id))"/>
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager  T="GetAllSuppliersResponse" 
+                             RowsPerPageString="Linhas por pág:"/>
+        </PagerContent>
+    </MudDataGrid>
+    
+    @if (_totalItems > 0)
+    {
+        <MudText Typo="Typo.body2" Class="mt-2 ml-2">
+            @GetPaginationInfo()
+        </MudText>
+    }
+</MudPaper>
+
+@code {
+    private MudDataGrid<GetAllSuppliersResponse>? _dataGrid;
+    private string _searchString = string.Empty;
+    private int _totalItems = 0;
+    private int _currentPage = 0;
+    private int _pageSize = 25;
+
+    private string GetPaginationInfo()
+    {
+        if (_totalItems == 0) return "0 registros";
+        
+        var firstItem = (_currentPage * _pageSize) + 1;
+        var lastItem = Math.Min((_currentPage + 1) * _pageSize, _totalItems);
+        return $"{firstItem}-{lastItem} de {_totalItems} registros";
+    }
+
+    private async Task OnSearch()
+    {
+        if (_dataGrid != null)
+        {
+            await _dataGrid.ReloadServerData();
+        }
+    }
+
+    private async Task<GridData<GetAllSuppliersResponse>> LoadServerData(GridState<GetAllSuppliersResponse> state)
+    {
+        try
+        {
+            // Determina ordenação
+            string orderBy = "createdAt";
+            if (state.SortDefinitions.Any())
+            {
+                var sortDef = state.SortDefinitions.First();
+                orderBy = sortDef.SortBy switch
+                {
+                    "LegalName" => sortDef.Descending ? "legalName_desc" : "legalName",
+                    "FantasyName" => sortDef.Descending ? "fantasyName_desc" : "fantasyName",
+                    "Cnpj" => sortDef.Descending ? "cnpj_desc" : "cnpj",
+                    "CreatedAt" => sortDef.Descending ? "createdAt_desc" : "createdAt",
+                    _ => "createdAt"
+                };
+            }
+
+            var response = await SuppliersService.GetAllSuppliersAsync(
+                search: string.IsNullOrWhiteSpace(_searchString) ? null : _searchString,
+                legalName: null,
+                fantasyName: null,
+                cnpj: null,
+                orderBy: orderBy,
+                page: state.Page + 1, // GridState usa índice base 0
+                pageSize: state.PageSize
+            );
+
+            // Atualiza informações de paginação
+            _totalItems = response.TotalCount;
+            _currentPage = state.Page;
+            _pageSize = state.PageSize;
+
+            return new GridData<GetAllSuppliersResponse>
+            {
+                Items = response.Data,
+                TotalItems = response.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar fornecedores: {ex.Message}", Severity.Error);
+            _totalItems = 0;
+            return new GridData<GetAllSuppliersResponse>
+            {
+                Items = new List<GetAllSuppliersResponse>(),
+                TotalItems = 0
+            };
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SupplierFormDialog>("Novo Fornecedor", options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await _dataGrid!.ReloadServerData();
+        }
+    }
+
+    private async Task OpenEditDialog(Guid id)
+    {
+        var parameters = new DialogParameters<SupplierFormDialog>
+        {
+            { x => x.SupplierId, id }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<SupplierFormDialog>("Editar Fornecedor", parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await _dataGrid!.ReloadServerData();
+        }
+    }
+
+    private async Task OpenDetailsDialog(Guid id)
+    {
+        var parameters = new DialogParameters<SupplierDetailsDialog>
+        {
+            { x => x.SupplierId, id }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        await DialogService.ShowAsync<SupplierDetailsDialog>("Detalhes do Fornecedor", parameters, options);
+    }
+
+    private string FormatCnpj(string cnpj)
+    {
+        if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14)
+            return cnpj;
+
+        return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
+    }
+}

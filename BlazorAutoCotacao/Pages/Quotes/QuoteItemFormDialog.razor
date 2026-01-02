@@ -1,0 +1,110 @@
+@using BlazorAutoCotacao.Dtos.Request
+@using BlazorAutoCotacao.Services
+@using MudBlazor
+@using System.Linq
+@inject QuotesService QuotesService
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @ref="_form" @bind-IsValid="_isValid">
+            <MudTextField @bind-Value="_model.Name" 
+                          Label="Nome do Item" 
+                          Required="true"
+                          RequiredError="Nome é obrigatório"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
+            
+            <MudNumericField @bind-Value="_model.Quantity" 
+                             Label="Quantidade" 
+                             Required="true"
+                             Min="1"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"/>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text">Cancelar</MudButton>
+        <MudButton OnClick="Save" 
+                   Variant="Variant.Filled" 
+                   Color="Color.Success"
+                   Disabled="@(!_isValid || _saving)">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true"/>
+                <MudText Class="ml-2">Salvando...</MudText>
+            }
+            else
+            {
+                <MudText>Salvar</MudText>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid QuoteId { get; set; }
+    [Parameter] public Guid? QuoteItemId { get; set; }
+    
+    private MudForm? _form;
+    private bool _isValid;
+    private bool _saving;
+    private bool _isEdit => QuoteItemId.HasValue;
+    
+    private AddQuoteItemDto _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isEdit)
+        {
+            try
+            {
+                var quote = await QuotesService.GetQuoteByIdAsync(QuoteId);
+                var item = quote.QuoteItems.FirstOrDefault(i => i.Id == QuoteItemId!.Value);
+                if (item != null)
+                {
+                    _model.Name = item.Name;
+                    _model.Quantity = item.Quantity;
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Erro ao carregar item: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task Save()
+    {
+        if (!_isValid) return;
+
+        try
+        {
+            _saving = true;
+            
+            if (_isEdit)
+            {
+                await QuotesService.UpdateQuoteItemAsync(QuoteId, QuoteItemId!.Value, _model);
+                Snackbar.Add("Item atualizado com sucesso!", Severity.Success);
+            }
+            else
+            {
+                await QuotesService.AddQuoteItemAsync(QuoteId, _model);
+                Snackbar.Add("Item adicionado com sucesso!", Severity.Success);
+            }
+            
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao salvar item: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}

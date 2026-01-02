@@ -1,0 +1,199 @@
+@page "/cotacoes"
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@using MudBlazor
+@inject QuotesService QuotesService
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudText Typo="Typo.h4" Class="mb-4">Cotações</MudText>
+
+<MudPaper Class="pa-4" Elevation="2">
+    <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-3">
+        <MudTextField @bind-Value="_searchString" 
+                      Placeholder="Buscar cotações..." 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      IconSize="Size.Medium"
+                      Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Style="max-width: 400px;"
+                      DebounceInterval="500"
+                      OnDebounceIntervalElapsed="OnSearch"
+                      Immediate="false"
+                      Clearable="true"/>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Success" 
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="OpenCreateDialog"
+                   Size="Size.Small">
+            Nova Cotação
+        </MudButton>
+    </MudStack>
+
+    <MudDataGrid T="GetAllQuotesResponse" 
+                 ServerData="LoadServerData"
+                 Dense="true"
+                 Hover="true"
+                 Bordered="false"
+                 Striped="false"
+                 @ref="_dataGrid"
+                 SortMode="SortMode.Single"
+                 Filterable="false"
+                 Hideable="false"
+                 RowsPerPage="25">
+        <Columns>
+            
+            <PropertyColumn Property="x => x.VehicleModel" Title="Modelo" Sortable="true"/>
+            <PropertyColumn Property="x => x.VehicleLicencePlate" Title="Placa" Sortable="true">
+                <CellTemplate>
+                    @context.Item.VehicleLicencePlate.ToUpper()
+                </CellTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.Status)">
+                <CellTemplate>
+                    <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Item.Status)">
+                        @context.Item.Status
+                    </MudChip>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Criado em" Sortable="true" SortBy="@(x => x.CreatedAt)" Hideable="true" Hidden="@(_isMobile)">
+                <CellTemplate>
+                    @context.Item.CreatedAt.ToString("dd/MM/yy")
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Ações" Sortable="false" Filterable="false" Hideable="false" 
+                           HeaderStyle="text-align: right; width: 120px;" 
+                           CellStyle="text-align: right;">
+                <CellTemplate>
+                    <MudTooltip Text="Visualizar Detalhes">
+                        <MudIconButton Icon="@Icons.Material.Filled.Visibility" 
+                                       Size="Size.Small" 
+                                       Color="Color.Info"
+                                       OnClick="@(() => NavigateToDetails(context.Item.Id))"/>
+                    </MudTooltip>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="GetAllQuotesResponse" 
+                             RowsPerPageString="Linhas por página:"/>
+        </PagerContent>
+    </MudDataGrid>
+    
+    @if (_totalItems > 0)
+    {
+        <MudText Typo="Typo.body2" Class="mt-2 ml-2">
+            @GetPaginationInfo()
+        </MudText>
+    }
+</MudPaper>
+
+@code {
+    private MudDataGrid<GetAllQuotesResponse>? _dataGrid;
+    private string _searchString = string.Empty;
+    private bool _isMobile = false;
+
+    protected override void OnInitialized()
+    {
+        // Simples detecção mobile - pode ser melhorado com JS Interop se necessário
+        _isMobile = false;
+    }
+    private int _totalItems = 0;
+    private int _currentPage = 0;
+    private int _pageSize = 25;
+
+    private string GetPaginationInfo()
+    {
+        if (_totalItems == 0) return "0 registros";
+        
+        var firstItem = (_currentPage * _pageSize) + 1;
+        var lastItem = Math.Min((_currentPage + 1) * _pageSize, _totalItems);
+        return $"{firstItem}-{lastItem} de {_totalItems} registros";
+    }
+
+    private async Task OnSearch()
+    {
+        if (_dataGrid != null)
+        {
+            await _dataGrid.ReloadServerData();
+        }
+    }
+
+    private async Task<GridData<GetAllQuotesResponse>> LoadServerData(GridState<GetAllQuotesResponse> state)
+    {
+        try
+        {
+            string orderBy = "createdAt";
+            if (state.SortDefinitions.Any())
+            {
+                var sortDef = state.SortDefinitions.First();
+                orderBy = sortDef.SortBy switch
+                {
+                    "VehicleModel" => sortDef.Descending ? "vehicleModel_desc" : "vehicleModel",
+                    "VehicleLicencePlate" => sortDef.Descending ? "vehicleLicencePlate_desc" : "vehicleLicencePlate",
+                    "Status" => sortDef.Descending ? "status_desc" : "status",
+                    "CreatedAt" => sortDef.Descending ? "createdAt_desc" : "createdAt",
+                    _ => "createdAt"
+                };
+            }
+
+            var response = await QuotesService.GetAllQuotesAsync(
+                search: string.IsNullOrWhiteSpace(_searchString) ? null : _searchString,
+                orderBy: orderBy,
+                page: state.Page + 1,
+                pageSize: state.PageSize
+            );
+
+            _totalItems = response.TotalCount;
+            _currentPage = state.Page;
+            _pageSize = state.PageSize;
+
+            return new GridData<GetAllQuotesResponse>
+            {
+                Items = response.Data,
+                TotalItems = response.TotalCount
+            };
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar cotações: {ex.Message}", Severity.Error);
+            _totalItems = 0;
+            return new GridData<GetAllQuotesResponse>
+            {
+                Items = new List<GetAllQuotesResponse>(),
+                TotalItems = 0
+            };
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.ExtraSmall, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<CreateQuoteDialog>("Nova Cotação", options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled && result.Data is Guid quoteId)
+        {
+            Navigation.NavigateTo($"/cotacoes/{quoteId}");
+        }
+    }
+
+    private void NavigateToDetails(Guid id)
+    {
+        Navigation.NavigateTo($"/cotacoes/{id}");
+    }
+
+    private Color GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "pendente" => Color.Warning,
+            "aprovada" => Color.Success,
+            "rejeitada" => Color.Error,
+            "cancelada" => Color.Default,
+            _ => Color.Info
+        };
+    }
+}
