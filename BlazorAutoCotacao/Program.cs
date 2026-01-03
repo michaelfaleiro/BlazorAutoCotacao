@@ -12,11 +12,14 @@ builder.Services.AddMudServices();
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Configuração da URL base da API via variável de ambiente (GitHub Actions)
-// Se não estiver definida, usa padrão para desenvolvimento
-var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") 
-    ?? builder.Configuration["ApiBaseUrl"] 
-    ?? "http://localhost:5154";
+// Configuração da URL base da API
+// Tenta obter do appsettings.json (injetado no deploy) ou usa localhost como fallback
+var configApiUrl = builder.Configuration["ApiBaseUrl"];
+var apiBaseUrl = !string.IsNullOrWhiteSpace(configApiUrl) 
+    ? configApiUrl 
+    : "http://localhost:5154";
+
+Console.WriteLine($"API Base URL: {apiBaseUrl}"); // Log para debug no console do navegador
 
 // Registro dos clientes Refit
 builder.Services.AddRefitClient<IQuotesApi>()
