@@ -36,6 +36,9 @@ jobs:
     - name: Change base-tag in index.html
       run: sed -i 's/<base href="\/" \/>/<base href="\/BlazorAutoCotacao\/" \/>/g' ./BlazorAutoCotacao/bin/Release/publish/wwwroot/index.html
 
+    - name: Update appsettings.json with API URL
+      run: echo '{"ApiBaseUrl":"${{ secrets.PROD_API_URL }}"}' > ./BlazorAutoCotacao/bin/Release/publish/wwwroot/appsettings.json
+
     - name: Copy 404.html to publish directory
       run: cp ./BlazorAutoCotacao/wwwroot/404.html ./BlazorAutoCotacao/bin/Release/publish/wwwroot/404.html
 
