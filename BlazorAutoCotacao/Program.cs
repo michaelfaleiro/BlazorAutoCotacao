@@ -12,8 +12,11 @@ builder.Services.AddMudServices();
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// Configuração da URL base da API
-var apiBaseUrl = "http://localhost:5154";
+// Configuração da URL base da API via variável de ambiente (GitHub Actions)
+// Se não estiver definida, usa padrão para desenvolvimento
+var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL") 
+    ?? builder.Configuration["ApiBaseUrl"] 
+    ?? "http://localhost:5154";
 
 // Registro dos clientes Refit
 builder.Services.AddRefitClient<IQuotesApi>()
@@ -27,3 +30,4 @@ builder.Services.AddScoped<QuotesService>();
 builder.Services.AddScoped<SuppliersService>();
 
 await builder.Build().RunAsync();
+

@@ -166,12 +166,13 @@
             {
                 var updateDto = new UpdateSupplierPriceDto
                 {
+                    SupplierPriceId = SupplierPriceId!.Value,
                     Price = _model.Price,
                     Brand = _model.Brand,
                     Quantity = _model.Quantity,
                     IsSelected = _model.IsSelected
                 };
-                await QuotesService.UpdateSupplierPriceAsync(SupplierPriceId!.Value, updateDto);
+                await QuotesService.UpdateSupplierPriceAsync(updateDto);
                 Snackbar.Add("Preço atualizado com sucesso!", Severity.Success);
             }
             else

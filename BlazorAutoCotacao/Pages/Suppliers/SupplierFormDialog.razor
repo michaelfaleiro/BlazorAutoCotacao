@@ -122,11 +122,12 @@
             {
                 var dto = new UpdateSupplierDto
                 {
+                    SupplierId = SupplierId!.Value,
                     LegalName = _model.LegalName,
                     FantasyName = _model.FantasyName,
                     Cnpj = cnpjClean
                 };
-                await SuppliersService.UpdateSupplierAsync(SupplierId!.Value, dto);
+                await SuppliersService.UpdateSupplierAsync(dto);
                 Snackbar.Add("Fornecedor atualizado com sucesso!", Severity.Success);
             }
             else

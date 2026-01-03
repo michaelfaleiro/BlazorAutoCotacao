@@ -87,12 +87,25 @@
             
             if (_isEdit)
             {
-                await QuotesService.UpdateQuoteItemAsync(QuoteId, QuoteItemId!.Value, _model);
+                var updateDto = new UpdateQuoteItemDto
+                {
+                    QuoteId = QuoteId,
+                    ItemId = QuoteItemId!.Value,
+                    Name = _model.Name,
+                    Quantity = _model.Quantity
+                };
+                await QuotesService.UpdateQuoteItemAsync(updateDto);
                 Snackbar.Add("Item atualizado com sucesso!", Severity.Success);
             }
             else
             {
-                await QuotesService.AddQuoteItemAsync(QuoteId, _model);
+                var addDto = new AddQuoteItemDto
+                {
+                    QuoteId = QuoteId,
+                    Name = _model.Name,
+                    Quantity = _model.Quantity
+                };
+                await QuotesService.AddQuoteItemAsync(addDto);
                 Snackbar.Add("Item adicionado com sucesso!", Severity.Success);
             }
             

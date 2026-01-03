@@ -63,7 +63,8 @@
         try
         {
             _saving = true;
-            await QuotesService.UpdateQuoteStatusAsync(QuoteId, _model);
+            _model.QuoteId = QuoteId;
+            await QuotesService.UpdateQuoteStatusAsync(_model);
             Snackbar.Add("Status atualizado com sucesso!", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }

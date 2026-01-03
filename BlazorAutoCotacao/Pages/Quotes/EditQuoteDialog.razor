@@ -97,7 +97,8 @@
         try
         {
             _saving = true;
-            await QuotesService.UpdateQuoteAsync(QuoteId, _model);
+            _model.QuoteId = QuoteId;
+            await QuotesService.UpdateQuoteAsync(_model);
             Snackbar.Add("Cotação atualizada com sucesso!", Severity.Success);
             MudDialog.Close(DialogResult.Ok(true));
         }

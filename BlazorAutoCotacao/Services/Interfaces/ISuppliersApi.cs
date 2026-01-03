@@ -19,9 +19,9 @@ public interface ISuppliersApi
         [Query] int page = 1,
         [Query] int pageSize = 25);
 
-    [Get("/api/suppliers/{id}")]
-    Task<GetSupplierByIdResponse> GetSupplierByIdAsync(Guid id);
+    [Get("/api/suppliers/{supplierId}")]
+    Task<GetSupplierByIdResponse> GetSupplierByIdAsync([AliasAs("supplierId")] Guid supplierId);
 
-    [Put("/api/suppliers/{id}")]
-    Task<UpdateSupplierResponse> UpdateSupplierAsync(Guid id, [Body] UpdateSupplierDto request);
+    [Put("/api/suppliers")]
+    Task<UpdateSupplierResponse> UpdateSupplierAsync([Body] UpdateSupplierDto request);
 }

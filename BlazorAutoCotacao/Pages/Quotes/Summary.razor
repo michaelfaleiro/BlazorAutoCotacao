@@ -2,10 +2,12 @@
 @using BlazorAutoCotacao.Dtos.Response
 @using BlazorAutoCotacao.Services
 @using Microsoft.JSInterop
+@using Microsoft.Extensions.Configuration
 @inject QuotesService QuotesService
 @inject ISnackbar Snackbar
 @inject IJSRuntime JS
 @inject NavigationManager Navigation
+@inject IConfiguration Configuration
 
 @if (_loading)
 {
@@ -165,7 +167,8 @@ else
     {
         try
         {
-            var url = $"http://localhost:5154/api/quotes/{QuoteId}/summary/pdf";
+            var apiBaseUrl = Configuration["ApiBaseUrl"];
+            var url = $"{apiBaseUrl}/api/quotes/{QuoteId}/summary/pdf";
             await JS.InvokeVoidAsync("open", url, "_blank");
         }
         catch (Exception ex)
@@ -178,7 +181,8 @@ else
     {
         try
         {
-            var url = $"http://localhost:5154/api/quotes/{QuoteId}/supplier/{supplierId}/pdf";
+            var apiBaseUrl = Configuration["ApiBaseUrl"];
+            var url = $"{apiBaseUrl}/api/quotes/{QuoteId}/supplier/{supplierId}/pdf";
             await JS.InvokeVoidAsync("open", url, "_blank");
         }
         catch (Exception ex)

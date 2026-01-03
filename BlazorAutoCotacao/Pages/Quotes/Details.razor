@@ -1,4 +1,5 @@
 @page "/cotacoes/{QuoteId:guid}"
+@using BlazorAutoCotacao.Dtos.Request
 @using BlazorAutoCotacao.Dtos.Response
 @using BlazorAutoCotacao.Services
 @inject QuotesService QuotesService
@@ -392,7 +393,8 @@ else if (_quote != null)
     {
         try
         {
-            await QuotesService.SelectWinnerAsync(supplierPriceId);
+            var command = new SelectSupplierPriceWinnerCommand { SupplierPriceId = supplierPriceId };
+            await QuotesService.SelectWinnerAsync(command);
             Snackbar.Add("Fornecedor vencedor selecionado!", Severity.Success);
             await LoadQuote();
         }

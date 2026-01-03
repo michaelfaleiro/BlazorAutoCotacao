@@ -30,13 +30,13 @@ public class SuppliersService
         return await _suppliersApi.GetAllSuppliersAsync(search, legalName, fantasyName, cnpj, orderBy, page, pageSize);
     }
 
-    public async Task<GetSupplierByIdResponse> GetSupplierByIdAsync(Guid id)
+    public async Task<GetSupplierByIdResponse> GetSupplierByIdAsync(Guid supplierId)
     {
-        return await _suppliersApi.GetSupplierByIdAsync(id);
+        return await _suppliersApi.GetSupplierByIdAsync(supplierId);
     }
 
-    public async Task<UpdateSupplierResponse> UpdateSupplierAsync(Guid id, UpdateSupplierDto request)
+    public async Task<UpdateSupplierResponse> UpdateSupplierAsync(UpdateSupplierDto request)
     {
-        return await _suppliersApi.UpdateSupplierAsync(id, request);
+        return await _suppliersApi.UpdateSupplierAsync(request);
     }
 }
