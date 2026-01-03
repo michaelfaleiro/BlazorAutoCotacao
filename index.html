@@ -7,16 +7,19 @@
     <title>BlazorAutoCotacao</title>
     <base href="/BlazorAutoCotacao/" />
     <script>
-        // Captura redirects de 404.html para SPAs no GitHub Pages
-        (function(){
-            var redirect = sessionStorage.redirect;
-            delete sessionStorage.redirect;
-            if (redirect && redirect !== location.href) {
-                history.replaceState(null, null, redirect);
+        // SPA redirect recovery from 404.html
+        (function(l) {
+            if (l.search[1] === '/' ) {
+                var decoded = l.search.slice(1).split('&').map(function(s) { 
+                    return s.replace(/~and~/g, '&')
+                }).join('?');
+                window.history.replaceState(null, null,
+                    l.pathname.slice(0, -1) + decoded + l.hash
+                );
             }
-        })();
+        }(window.location));
     </script>
-    <link href="_framework/dotnet.wlf33as4md.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-PIM9EmU1BrflxTU3Q/Drok1DI+MXU8fFK3JTfedDVrg=" />
+    <link href="_framework/dotnet.v7u9mexfdk.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-O5/jU4/LdQIfqfy0ObRxn84L14qM+noyruM3wdKK8jI=" />
     <link rel="stylesheet" href="css/app.css" />
     <!-- If you add any scoped CSS files, uncomment the following to load them
     <link href="BlazorAutoCotacao.styles.css" rel="stylesheet" /> -->
@@ -29,18 +32,18 @@
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.66stpp682q.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.cs8mcre4gh.js",
     "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.0j6ezsi0n0.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.wlf33as4md.js"
+    "./_framework/dotnet.js": "./_framework/dotnet.v7u9mexfdk.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.66stpp682q.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
     "./_framework/blazor.webassembly.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
-    "./_framework/dotnet.js": "sha256-PIM9EmU1BrflxTU3Q/Drok1DI+MXU8fFK3JTfedDVrg=",
+    "./_framework/dotnet.js": "sha256-O5/jU4/LdQIfqfy0ObRxn84L14qM+noyruM3wdKK8jI=",
     "./_framework/dotnet.native.cs8mcre4gh.js": "sha256-/I3SDHIle7heAxlUGBrgxax+lkKyWyRLBVEJmTHJSCs=",
     "./_framework/dotnet.native.js": "sha256-/I3SDHIle7heAxlUGBrgxax+lkKyWyRLBVEJmTHJSCs=",
     "./_framework/dotnet.runtime.0j6ezsi0n0.js": "sha256-jCsbbdXoVd1zzGc0fQT2sz4mKuv0ANdurPVGo5Sc2jg=",
     "./_framework/dotnet.runtime.js": "sha256-jCsbbdXoVd1zzGc0fQT2sz4mKuv0ANdurPVGo5Sc2jg=",
-    "./_framework/dotnet.wlf33as4md.js": "sha256-PIM9EmU1BrflxTU3Q/Drok1DI+MXU8fFK3JTfedDVrg="
+    "./_framework/dotnet.v7u9mexfdk.js": "sha256-O5/jU4/LdQIfqfy0ObRxn84L14qM+noyruM3wdKK8jI="
   }
 }</script>
 </head>
