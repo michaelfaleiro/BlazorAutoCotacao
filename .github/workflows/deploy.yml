@@ -29,9 +29,12 @@ jobs:
 
     - name: Build and Publish
       working-directory: ./BlazorAutoCotacao
-      run: dotnet publish BlazorAutoCotacao.csproj -c Release -o ./bin/Release/publish
+      run: dotnet publish BlazorAutoCotacao.csproj -c Release -o ./bin/Release/publish -p:GHPages=true
       env:
         API_BASE_URL: ${{ secrets.PROD_API_URL }}
+
+    - name: Change base-tag in index.html
+      run: sed -i 's/<base href="\/" \/>/<base href="\/BlazorAutoCotacao\/" \/>/g' ./BlazorAutoCotacao/bin/Release/publish/wwwroot/index.html
 
     - name: Copy 404.html to publish directory
       run: cp ./BlazorAutoCotacao/wwwroot/404.html ./BlazorAutoCotacao/bin/Release/publish/wwwroot/404.html
