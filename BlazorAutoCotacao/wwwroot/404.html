@@ -12,11 +12,15 @@
     <script type="importmap"></script>
     <script>
         // Redireciona erros 404 de SPA para index.html
-        const redirect = sessionStorage.getItem('redirect');
-        if (redirect) {
-            sessionStorage.removeItem('redirect');
-            window.location.replace(redirect);
-        }
+        (function() {
+            const path = window.location.pathname;
+            
+            // Se não for uma API call, armazena o caminho e redireciona para index.html
+            if (!path.includes('/api/')) {
+                sessionStorage.setItem('redirect', path);
+                window.location.replace('/BlazorAutoCotacao/');
+            }
+        })();
     </script>
 </head>
 <body>
@@ -27,7 +31,7 @@
         </svg>
         <div class="loading-progress-text"></div>
     </div>
-    <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
+    <script src="_framework/blazor.webassembly.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js?v=1"></script>
 </body>
 </html>
