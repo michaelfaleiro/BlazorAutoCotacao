@@ -176,13 +176,13 @@
 
         if (result != null && !result.Canceled && result.Data is Guid quoteId)
         {
-            Navigation.NavigateTo($"/cotacoes/{quoteId}");
+            Navigation.NavigateTo($"cotacoes/{quoteId}");
         }
     }
 
     private void NavigateToDetails(Guid id)
     {
-        Navigation.NavigateTo($"/cotacoes/{id}");
+        Navigation.NavigateTo($"cotacoes/{id}");
     }
 
     private Color GetStatusColor(string status)

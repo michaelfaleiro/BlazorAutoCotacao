@@ -19,8 +19,6 @@ var apiBaseUrl = !string.IsNullOrWhiteSpace(configApiUrl)
     ? configApiUrl 
     : "http://localhost:5154";
 
-Console.WriteLine($"API Base URL: {apiBaseUrl}"); // Log para debug no console do navegador
-
 // Registro dos clientes Refit
 builder.Services.AddRefitClient<IQuotesApi>()
     .ConfigureHttpClient(c => c.BaseAddress = new Uri(apiBaseUrl));

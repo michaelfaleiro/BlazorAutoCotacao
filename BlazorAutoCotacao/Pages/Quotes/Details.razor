@@ -252,12 +252,12 @@ else if (_quote != null)
 
     private void NavigateToSummary()
     {
-        Navigation.NavigateTo($"/cotacoes/{QuoteId}/resumo");
+        Navigation.NavigateTo($"cotacoes/{QuoteId}/resumo");
     }
 
     private void GoBack()
     {
-        Navigation.NavigateTo("/cotacoes");
+        Navigation.NavigateTo("cotacoes");
     }
 
     private async Task LoadQuote()
