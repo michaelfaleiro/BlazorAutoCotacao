@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - API_BASE_URL=https://autocotacaoapi-latest.onrender.com
+      - BASE_HREF=/
+    restart: unless-stopped
