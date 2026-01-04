@@ -11,7 +11,7 @@
 
 @if (_loading)
 {
-    <MudProgressLinear Color="Color.Primary" Indeterminate="true"/>
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
 }
 else if (_summary != null)
 {
@@ -20,41 +20,31 @@ else if (_summary != null)
             <MudPaper Class="pa-4" Elevation="2">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                     <div style="display:flex; align-items:center;">
-                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
-                                       Color="Color.Default"
-                                       Size="Size.Medium"
-                                       OnClick="GoBackToDetails"
-                                       Title="Voltar" />
-                        <div style="margin-left:8px;">
-                            <MudText Typo="Typo.h5">Resumo da Cotação</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Secondary">
-                                Veículo: @_summary.VehicleModel @_summary.VehicleYearModel • Placa: @_summary.VehicleLicencePlate
-                            </MudText>
-                        </div>
+                        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Size="Size.Medium"
+                            OnClick="GoBackToDetails" Title="Voltar" />
+
+                        <MudText Typo="Typo.h5" Class="ml-2">Resumo da Cotação</MudText>
                     </div>
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               StartIcon="@Icons.Material.Filled.PictureAsPdf"
-                               OnClick="DownloadSummaryPdf"
-                               Size="Size.Small">
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.PictureAsPdf"
+                        OnClick="DownloadSummaryPdf" Size="Size.Small">
                         PDF - Resumo Completo
                     </MudButton>
                 </MudStack>
-                
-                <MudDivider Class="mb-3"/>
-                
+
+                <MudDivider Class="mb-3" />
+
                 <MudGrid Spacing="2">
                     <MudItem xs="12" sm="6" md="3">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Modelo</MudText>
-                        <MudText Typo="Typo.body2">@_summary.VehicleModel</MudText>
+                        <MudText Typo="Typo.body2">@_summary.VehicleModel.ToUpper()</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Placa</MudText>
-                        <MudText Typo="Typo.body2">@_summary.VehicleLicencePlate</MudText>
+                        <MudText Typo="Typo.body2">@_summary.VehicleLicencePlate.ToUpper()</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Chassi</MudText>
-                        <MudText Typo="Typo.body2">@_summary.VehicleVin</MudText>
+                        <MudText Typo="Typo.body2">@_summary.VehicleVin.ToUpper()</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="6" md="3">
                         <MudText Typo="Typo.caption" Color="Color.Secondary">Ano/Modelo</MudText>
@@ -69,21 +59,13 @@ else if (_summary != null)
             <MudItem xs="12">
                 <MudPaper Class="pa-4" Elevation="2">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
-                        <MudText Typo="Typo.h6">@supplier.SupplierFantasyName</MudText>
-                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf"
-                                       Color="Color.Error"
-                                       Size="Size.Medium"
-                                       OnClick="@(() => DownloadSupplierPdf(supplier.SupplierId))"
-                                       Title="Download PDF deste fornecedor"/>
+                        <MudText Typo="Typo.h6">@TextHelpers.Capitalize(supplier.SupplierFantasyName)</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Medium"
+                            OnClick="@(() => DownloadSupplierPdf(supplier.SupplierId))" Title="Download PDF deste fornecedor" />
                     </MudStack>
 
-                    <MudTable T="QuoteItemSummaryDto"
-                              Items="supplier.Items"
-                              Dense="true"
-                              Hover="true"
-                              Bordered="true"
-                              Striped="false"
-                              Breakpoint="Breakpoint.Sm">
+                    <MudTable T="QuoteItemSummaryDto" Items="supplier.Items" Dense="true" Hover="true" Bordered="true"
+                        Striped="false" Breakpoint="Breakpoint.Sm">
                         <HeaderContent>
                             <MudTh>Item</MudTh>
                             <MudTh Class="d-none d-sm-table-cell">Qtd</MudTh>
@@ -93,25 +75,28 @@ else if (_summary != null)
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd DataLabel="Item">
-                                <MudText Typo="Typo.body2">@context.ItemName</MudText>
-                                <MudText Typo="Typo.caption" Class="d-sm-none">Qtd: @context.Quantity • @context.Brand</MudText>
+                                <MudText Typo="Typo.body2">@TextHelpers.Capitalize(context.ItemName)</MudText>
+                                <MudText Typo="Typo.caption" Class="d-sm-none">Qtd: @context.Quantity •
+                                    @TextHelpers.Capitalize(context.Brand)</MudText>
                             </MudTd>
                             <MudTd DataLabel="Qtd" Class="d-none d-sm-table-cell">@context.Quantity</MudTd>
-                            <MudTd DataLabel="Marca" Class="d-none d-md-table-cell">@context.Brand</MudTd>
+                            <MudTd DataLabel="Marca" Class="d-none d-md-table-cell">@TextHelpers.Capitalize(context.Brand)
+                            </MudTd>
                             <MudTd DataLabel="Preço Unit.">
-                                <MudText Typo="Typo.body2">@context.UnitPrice.ToString("C")</MudText>
+                                    <MudText Typo="Typo.body2">@TextHelpers.ToCurrency(context.UnitPrice)</MudText>
                             </MudTd>
                             <MudTd DataLabel="Total">
-                                <MudText Typo="Typo.body2" Color="Color.Success"><strong>@context.TotalPrice.ToString("C")</strong></MudText>
+                                <MudText Typo="Typo.body2" Color="Color.Success">
+                                        <strong>@TextHelpers.ToCurrency(context.TotalPrice)</strong></MudText>
                             </MudTd>
                         </RowTemplate>
                     </MudTable>
 
-                    <MudDivider Class="my-3"/>
+                    <MudDivider Class="my-3" />
 
                     <MudStack Row="true" Justify="Justify.FlexEnd">
                         <MudText Typo="Typo.h6" Color="Color.Primary">
-                            Total @supplier.SupplierFantasyName: @supplier.TotalPrice.ToString("C")
+                            Total @TextHelpers.Capitalize(supplier.SupplierFantasyName): @TextHelpers.ToCurrency(supplier.TotalPrice)
                         </MudText>
                     </MudStack>
                 </MudPaper>
@@ -121,8 +106,9 @@ else if (_summary != null)
         <MudItem xs="12">
             <MudPaper Class="pa-4" Elevation="3">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.h5" Color="Color.Success">TOTAL GERAL</MudText>
-                    <MudText Typo="Typo.h4" Color="Color.Success"><strong>@_summary.GrandTotal.ToString("C")</strong></MudText>
+                    <MudText Typo="Typo.h5" Color="Color.Success">Total Geral</MudText>
+                        <MudText Typo="Typo.h4" Color="Color.Success"><strong>@TextHelpers.ToCurrency(_summary.GrandTotal)</strong>
+                    </MudText>
                 </MudStack>
             </MudPaper>
         </MudItem>

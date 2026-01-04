@@ -14,7 +14,7 @@
                              Label="Fornecedor"
                              @bind-Value="_selectedSupplier"
                              SearchFunc="SearchSuppliers"
-                             ToStringFunc="@(s => s?.FantasyName ?? string.Empty)"
+                             ToStringFunc="@(s => TextHelpers.Capitalize(s?.FantasyName ?? string.Empty))"
                              Required="true"
                              RequiredError="Fornecedor é obrigatório"
                              Variant="Variant.Outlined"
@@ -26,7 +26,7 @@
                              CoerceValue="false">
                 <ItemTemplate Context="supplier">
                     <MudStack Spacing="0">
-                        <MudText Typo="Typo.body2"><strong>@supplier.FantasyName</strong></MudText>
+                        <MudText Typo="Typo.body2"><strong>@TextHelpers.Capitalize(supplier.FantasyName)</strong></MudText>
                         <MudText Typo="Typo.caption">@supplier.LegalName - @FormatCnpj(supplier.Cnpj)</MudText>
                     </MudStack>
                 </ItemTemplate>

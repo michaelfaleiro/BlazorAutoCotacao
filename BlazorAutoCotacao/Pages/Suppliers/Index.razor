@@ -43,8 +43,16 @@
                  Hideable="false"
                  RowsPerPage="25">
         <Columns>
-            <PropertyColumn Property="x => x.LegalName" Title="Razão Social" Sortable="true"/>
-            <PropertyColumn Property="x => x.FantasyName" Title="Nome Fantasia" Sortable="true"/>
+            <TemplateColumn Title="Razão Social" Sortable="true">
+                <CellTemplate>
+                    @TextHelpers.Capitalize(context.Item.LegalName)
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Nome Fantasia" Sortable="true">
+                <CellTemplate>
+                    @TextHelpers.Capitalize(context.Item.FantasyName)
+                </CellTemplate>
+            </TemplateColumn>
             <TemplateColumn Title="CNPJ" Sortable="true" SortBy="@(x => x.Cnpj)">
                 <CellTemplate>
                     @FormatCnpj(context.Item.Cnpj)
@@ -52,7 +60,7 @@
             </TemplateColumn>
             <TemplateColumn Title="Data de Criação" Sortable="true" SortBy="@(x => x.CreatedAt)">
                 <CellTemplate>
-                    @context.Item.CreatedAt.ToString("dd/MM/yyyy")
+                    @TextHelpers.ToLocalString(context.Item.CreatedAt, "dd/MM/yyyy")
                 </CellTemplate>
             </TemplateColumn>
             <TemplateColumn Title="Ações" Sortable="false" Filterable="false" Hideable="false" 

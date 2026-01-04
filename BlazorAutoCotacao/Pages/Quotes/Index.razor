@@ -60,7 +60,7 @@
             </TemplateColumn>
             <TemplateColumn Title="Criado em" Sortable="true" SortBy="@(x => x.CreatedAt)" Hideable="true" Hidden="@(_isMobile)">
                 <CellTemplate>
-                    @context.Item.CreatedAt.ToString("dd/MM/yy")
+                    @TextHelpers.ToLocalString(context.Item.CreatedAt, "dd/MM/yy HH:mm")
                 </CellTemplate>
             </TemplateColumn>
             <TemplateColumn Title="Ações" Sortable="false" Filterable="false" Hideable="false" 

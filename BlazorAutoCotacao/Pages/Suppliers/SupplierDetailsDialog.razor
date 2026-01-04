@@ -23,7 +23,7 @@
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.subtitle2" Color="Color.Primary">Nome Fantasia</MudText>
-                    <MudText Typo="Typo.body1" Class="mb-3">@_supplier.FantasyName</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@TextHelpers.Capitalize(_supplier.FantasyName)</MudText>
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.subtitle2" Color="Color.Primary">CNPJ</MudText>
@@ -31,13 +31,13 @@
                 </MudItem>
                 <MudItem xs="12" sm="6">
                     <MudText Typo="Typo.subtitle2" Color="Color.Primary">Data de Criação</MudText>
-                    <MudText Typo="Typo.body1" Class="mb-3">@_supplier.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</MudText>
+                    <MudText Typo="Typo.body1" Class="mb-3">@TextHelpers.ToLocalString(_supplier.CreatedAt, "dd/MM/yyyy HH:mm:ss")</MudText>
                 </MudItem>
                 @if (_supplier.UpdatedAt.HasValue)
                 {
-                    <MudItem xs="12" sm="6">
+                        <MudItem xs="12" sm="6">
                         <MudText Typo="Typo.subtitle2" Color="Color.Primary">Última Atualização</MudText>
-                        <MudText Typo="Typo.body1" Class="mb-3">@_supplier.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm:ss")</MudText>
+                        <MudText Typo="Typo.body1" Class="mb-3">@TextHelpers.ToLocalString(_supplier.UpdatedAt, "dd/MM/yyyy HH:mm:ss")</MudText>
                     </MudItem>
                 }
             </MudGrid>
