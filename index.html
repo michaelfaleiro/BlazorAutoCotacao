@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://autocotacaoapi-latest.onrender.com blob: data:; worker-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://autocotacaoapi-latest.onrender.com %%API_CSP_HOST%% blob: data:; worker-src 'self' blob:;" />
     <title>BlazorAutoCotacao</title>
     <base href="/BlazorAutoCotacao/" />
     <script>
@@ -20,7 +20,7 @@
             }
         }(window.location));
     </script>
-    <link href="_framework/dotnet.jd91uco9ln.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-ScwzJzwygC2g0leQTm/HuaUApIOddtaoTMDtk+aIJno=" />
+    <link href="_framework/dotnet.isjv2g3al0.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-8qdUiLAE+9cYYbmDgLB1DJ5rO2JWg5Ylfbu+zGCzdmM=" />
     <link rel="stylesheet" href="css/app.css" />
     <!-- If you add any scoped CSS files, uncomment the following to load them
     <link href="BlazorAutoCotacao.styles.css" rel="stylesheet" /> -->
@@ -31,7 +31,7 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.66stpp682q.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.jd91uco9ln.js",
+    "./_framework/dotnet.js": "./_framework/dotnet.isjv2g3al0.js",
     "./_framework/dotnet.native.js": "./_framework/dotnet.native.cs8mcre4gh.js",
     "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.0j6ezsi0n0.js"
   },
@@ -39,8 +39,8 @@
   "integrity": {
     "./_framework/blazor.webassembly.66stpp682q.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
     "./_framework/blazor.webassembly.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
-    "./_framework/dotnet.jd91uco9ln.js": "sha256-ScwzJzwygC2g0leQTm/HuaUApIOddtaoTMDtk+aIJno=",
-    "./_framework/dotnet.js": "sha256-ScwzJzwygC2g0leQTm/HuaUApIOddtaoTMDtk+aIJno=",
+    "./_framework/dotnet.isjv2g3al0.js": "sha256-8qdUiLAE+9cYYbmDgLB1DJ5rO2JWg5Ylfbu+zGCzdmM=",
+    "./_framework/dotnet.js": "sha256-8qdUiLAE+9cYYbmDgLB1DJ5rO2JWg5Ylfbu+zGCzdmM=",
     "./_framework/dotnet.native.cs8mcre4gh.js": "sha256-/I3SDHIle7heAxlUGBrgxax+lkKyWyRLBVEJmTHJSCs=",
     "./_framework/dotnet.native.js": "sha256-/I3SDHIle7heAxlUGBrgxax+lkKyWyRLBVEJmTHJSCs=",
     "./_framework/dotnet.runtime.0j6ezsi0n0.js": "sha256-jCsbbdXoVd1zzGc0fQT2sz4mKuv0ANdurPVGo5Sc2jg=",
