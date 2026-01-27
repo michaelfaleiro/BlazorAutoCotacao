@@ -1,8 +1,6 @@
 @using BlazorAutoCotacao.Dtos.Request
 @using BlazorAutoCotacao.Dtos.Response
 @using BlazorAutoCotacao.Services
-@using MudBlazor
-@using System.Linq
 @inject QuotesService QuotesService
 @inject SuppliersService SuppliersService
 @inject ISnackbar Snackbar
@@ -19,7 +17,7 @@
                              RequiredError="Fornecedor é obrigatório"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"
-                             Disabled="_isEdit"
+                             Disabled="IsEdit"
                              DebounceInterval="300"
                              ResetValueOnEmptyText="true"
                              CoerceText="true"
@@ -54,6 +52,16 @@
                              Min="1"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"/>
+            
+            <MudTextField @bind-Value="_model.Sku"
+                          Label="Sku"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
+            
+            <MudTextField @bind-Value="_model.Observation"
+                          Label="Observação"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -84,16 +92,19 @@
     private MudForm? _form;
     private bool _isValid;
     private bool _saving;
-    private bool _isEdit => SupplierPriceId.HasValue;
+    private bool IsEdit => SupplierPriceId.HasValue;
     private GetAllSuppliersResponse? _selectedSupplier;
     
-    private AddSupplierPriceDto _model = new()
+    private readonly AddSupplierPriceDto _model = new()
     {
         QuoteId = Guid.Empty,
         QuoteItemId = Guid.Empty,
         SupplierId = Guid.Empty,
         Price = 0,
         Brand = string.Empty,
+        Quantity = 1,
+        Observation = string.Empty,
+        Sku = string.Empty,
         IsSelected = false
     };
 
@@ -102,7 +113,7 @@
         _model.QuoteId = QuoteId;
         _model.QuoteItemId = QuoteItemId;
 
-        if (_isEdit)
+        if (IsEdit)
         {
             try
             {
@@ -116,6 +127,8 @@
                         _model.Price = price.Price;
                         _model.Brand = price.Brand;
                         _model.Quantity = price.Quantity;
+                        _model.Sku = price.Sku;
+                        _model.Observation = price.Observation;
                         _model.IsSelected = price.IsSelected;
                         _selectedSupplier = new GetAllSuppliersResponse
                         {
@@ -135,7 +148,7 @@
     private async Task<IEnumerable<GetAllSuppliersResponse>> SearchSuppliers(string value, CancellationToken token)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
-            return Array.Empty<GetAllSuppliersResponse>();
+            return [];
 
         try
         {
@@ -147,7 +160,7 @@
         }
         catch
         {
-            return Array.Empty<GetAllSuppliersResponse>();
+            return [];
         }
     }
 
@@ -162,7 +175,7 @@
             _saving = true;
             _model.SupplierId = _selectedSupplier.Id;
             
-            if (_isEdit)
+            if (IsEdit)
             {
                 var updateDto = new UpdateSupplierPriceDto
                 {
@@ -170,6 +183,8 @@
                     Price = _model.Price,
                     Brand = _model.Brand,
                     Quantity = _model.Quantity,
+                    Sku = _model.Sku,
+                    Observation = _model.Observation,
                     IsSelected = _model.IsSelected
                 };
                 await QuotesService.UpdateSupplierPriceAsync(updateDto);
@@ -198,6 +213,6 @@
         if (string.IsNullOrEmpty(cnpj) || cnpj.Length != 14)
             return cnpj;
 
-        return $"{cnpj.Substring(0, 2)}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
+        return $"{cnpj[..2]}.{cnpj.Substring(2, 3)}.{cnpj.Substring(5, 3)}/{cnpj.Substring(8, 4)}-{cnpj.Substring(12, 2)}";
     }
 }

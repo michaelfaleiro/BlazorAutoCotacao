@@ -93,6 +93,7 @@ else if (_quote != null)
                     <HeaderContent>
                         <MudTh Class="d-none d-sm-table-cell"></MudTh>
                         <MudTh>Descrição</MudTh>
+                        <MudTh Class="d-none d-sm-table-cell">Observação</MudTh>
                         <MudTh>Quantidade</MudTh>
                         <MudTh Class="d-none d-sm-table-cell">Adicionado</MudTh>
                         <MudTh Style="text-align: right;">Ações</MudTh>
@@ -116,7 +117,12 @@ else if (_quote != null)
                                     <MudText Typo="Typo.caption" Color="Color.Info">@context.SupplierPrices.Count preços
                                     </MudText>
                                 }
+                                <MudText Typo="Typo.caption" Class="d-sm-none">@context.Observation</MudText>
                             </MudStack>
+                        </MudTd>
+
+                        <MudTd DataLabel="Observação" Class="d-none d-sm-table-cell">
+                            <MudText Typo="Typo.body2">@context.Observation</MudText>
                         </MudTd>
                         <MudTd DataLabel="Quantidade">
                             <MudText Typo="Typo.body2"><strong>@context.Quantity</strong></MudText>
@@ -177,6 +183,7 @@ else if (_quote != null)
                                                 <HeaderContent>
                                                     <MudTh>Fornecedor</MudTh>
                                                     <MudTh Class="d-none d-sm-table-cell">Marca</MudTh>
+                                                    <MudTh Class="d-none d-sm-table-cell">Observação</MudTh>
                                                     <MudTh>Quantidade</MudTh>
                                                     <MudTh>Preço</MudTh>
                                                     <MudTh Style="text-align: right;">Ações</MudTh>
@@ -185,8 +192,12 @@ else if (_quote != null)
                                                     <MudTd DataLabel="Fornecedor">
                                                         <MudText Typo="Typo.body2">@TextHelpers.Capitalize(price.Supplier.FantasyName)</MudText>
                                                         <MudText Typo="Typo.caption" Class="d-sm-none">@TextHelpers.Capitalize(price.Brand)</MudText>
+                                                        <MudText Typo="Typo.caption" Class="d-sm-none">@price.Observation</MudText>
                                                     </MudTd>
                                                     <MudTd DataLabel="Marca" Class="d-none d-sm-table-cell">@TextHelpers.Capitalize(price.Brand)</MudTd>
+                                                    <MudTd DataLabel="Observação" Class="d-none d-sm-table-cell">
+                                                        <MudText Typo="Typo.body2">@price.Observation</MudText>
+                                                    </MudTd>
                                                     <MudTd DataLabel="Quantidade">
                                                         <MudText Typo="Typo.body2"><strong>@price.Quantity</strong></MudText>
                                                     </MudTd>

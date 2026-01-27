@@ -6,6 +6,8 @@ public class QuoteItemSummaryDto
     public string ItemName { get; set; } = string.Empty;
     public int Quantity { get; set; }
     public string Brand { get; set; } = string.Empty;
+    public string Sku { get; set; } = string.Empty;
+    public string Observation { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
     public decimal TotalPrice { get; set; }
 }
