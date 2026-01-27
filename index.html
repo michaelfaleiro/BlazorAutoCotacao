@@ -4,7 +4,41 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://autocotacaoapi-latest.onrender.com %%API_CSP_HOST%% https://cloudflareinsights.com blob: data:; worker-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:5154 %%API_CSP_HOST%% https://cloudflareinsights.com blob: data:; worker-src 'self' blob:;" />
+
+    <script>
+        // Ensure CSP connect-src includes the ApiBaseUrl from appsettings when running locally
+        (async function(){
+            try{
+                const candidates=['/appsettings.json','/appsettings.Development.json'];
+                let cfg;
+                for(const u of candidates){
+                    try{
+                        const res = await fetch(u, {cache: 'no-store'});
+                        if(res.ok){ cfg = await res.json(); break; }
+                    }catch(e){ /* ignore */ }
+                }
+                const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+                if(!meta) return;
+                let content = meta.getAttribute('content') || '';
+                // remove placeholder if present
+                content = content.replace(/%%API_CSP_HOST%%/g, '').replace(/\s+/g, ' ').trim();
+                if(cfg && cfg.ApiBaseUrl){
+                    let origin;
+                    try{ origin = new URL(cfg.ApiBaseUrl).origin; }catch(e){
+                        const m = cfg.ApiBaseUrl.match(/^(https?:\/\/[^/]+)/);
+                        if(m) origin = m[1];
+                    }
+                    if(origin && !content.includes(origin)){
+                        content = content.replace(/connect-src\s([^;]*)/, function(m, p1){
+                            return 'connect-src ' + p1 + ' ' + origin;
+                        });
+                    }
+                }
+                meta.setAttribute('content', content);
+            }catch(e){ /* noop */ }
+        })();
+    </script>
     <title>BlazorAutoCotacao</title>
     <base href="/BlazorAutoCotacao/" />
     <script>
@@ -20,7 +54,7 @@
             }
         }(window.location));
     </script>
-    <link href="_framework/dotnet.7i8q8yzckw.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-cVJYT1df1i+DebGWBgNT0wrodqXY4SKhKCTXkwDel4s=" />
+    <link href="_framework/dotnet.bslh4w0ss9.js" rel="preload" as="script" fetchpriority="high" crossorigin="anonymous" integrity="sha256-i4wW2AZEzwsbUUSV2FzMypnNZ1WXKJpu7c9azMbzf48=" />
     <link rel="stylesheet" href="css/app.css" />
     <!-- If you add any scoped CSS files, uncomment the following to load them
     <link href="BlazorAutoCotacao.styles.css" rel="stylesheet" /> -->
@@ -31,20 +65,20 @@
     <script type="importmap">{
   "imports": {
     "./_framework/blazor.webassembly.js": "./_framework/blazor.webassembly.66stpp682q.js",
-    "./_framework/dotnet.js": "./_framework/dotnet.7i8q8yzckw.js",
-    "./_framework/dotnet.native.js": "./_framework/dotnet.native.cs8mcre4gh.js",
-    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.0j6ezsi0n0.js"
+    "./_framework/dotnet.js": "./_framework/dotnet.bslh4w0ss9.js",
+    "./_framework/dotnet.native.js": "./_framework/dotnet.native.87vtjjdetb.js",
+    "./_framework/dotnet.runtime.js": "./_framework/dotnet.runtime.2tx45g8lli.js"
   },
   "scopes": {},
   "integrity": {
     "./_framework/blazor.webassembly.66stpp682q.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
     "./_framework/blazor.webassembly.js": "sha256-3lCWrko3zwspV40aQhs2S/IMkRSarnHRKIdkHhuXIBA=",
-    "./_framework/dotnet.7i8q8yzckw.js": "sha256-cVJYT1df1i+DebGWBgNT0wrodqXY4SKhKCTXkwDel4s=",
-    "./_framework/dotnet.js": "sha256-cVJYT1df1i+DebGWBgNT0wrodqXY4SKhKCTXkwDel4s=",
-    "./_framework/dotnet.native.cs8mcre4gh.js": "sha256-/I3SDHIle7heAxlUGBrgxax+lkKyWyRLBVEJmTHJSCs=",
-    "./_framework/dotnet.native.js": "sha256-/I3SDHIle7heAxlUGBrgxax+lkKyWyRLBVEJmTHJSCs=",
-    "./_framework/dotnet.runtime.0j6ezsi0n0.js": "sha256-jCsbbdXoVd1zzGc0fQT2sz4mKuv0ANdurPVGo5Sc2jg=",
-    "./_framework/dotnet.runtime.js": "sha256-jCsbbdXoVd1zzGc0fQT2sz4mKuv0ANdurPVGo5Sc2jg="
+    "./_framework/dotnet.bslh4w0ss9.js": "sha256-i4wW2AZEzwsbUUSV2FzMypnNZ1WXKJpu7c9azMbzf48=",
+    "./_framework/dotnet.js": "sha256-i4wW2AZEzwsbUUSV2FzMypnNZ1WXKJpu7c9azMbzf48=",
+    "./_framework/dotnet.native.87vtjjdetb.js": "sha256-zE11fbcG2CeLl1Zi+NJgMOfWpdjuUWNte+icrtAO58I=",
+    "./_framework/dotnet.native.js": "sha256-zE11fbcG2CeLl1Zi+NJgMOfWpdjuUWNte+icrtAO58I=",
+    "./_framework/dotnet.runtime.2tx45g8lli.js": "sha256-2lZh9yO0fnzm3Xt7yV+Kox3DH3nK7L8hDhm84VT1xco=",
+    "./_framework/dotnet.runtime.js": "sha256-2lZh9yO0fnzm3Xt7yV+Kox3DH3nK7L8hDhm84VT1xco="
   }
 }</script>
 </head>
