@@ -67,6 +67,7 @@ else if (_summary != null)
                     <MudTable T="QuoteItemSummaryDto" Items="supplier.Items" Dense="true" Hover="true" Bordered="true"
                         Striped="false" Breakpoint="Breakpoint.Sm">
                         <HeaderContent>
+                            <MudTh>Sku</MudTh>
                             <MudTh>Item</MudTh>
                             <MudTh Class="d-none d-sm-table-cell">Qtd</MudTh>
                             <MudTh Class="d-none d-md-table-cell">Marca</MudTh>
@@ -74,6 +75,7 @@ else if (_summary != null)
                             <MudTh>Total</MudTh>
                         </HeaderContent>
                         <RowTemplate>
+                            <MudTd DataLabel="Sku">@context.Sku</MudTd>
                             <MudTd DataLabel="Item">
                                 <MudText Typo="Typo.body2">@TextHelpers.Capitalize(context.ItemName)</MudText>
                                 <MudText Typo="Typo.caption" Class="d-sm-none">Qtd: @context.Quantity •
@@ -83,11 +85,11 @@ else if (_summary != null)
                             <MudTd DataLabel="Marca" Class="d-none d-md-table-cell">@TextHelpers.Capitalize(context.Brand)
                             </MudTd>
                             <MudTd DataLabel="Preço Unit.">
-                                    <MudText Typo="Typo.body2">@TextHelpers.ToCurrency(context.UnitPrice)</MudText>
+                                <MudText Typo="Typo.body2">@TextHelpers.ToCurrency(context.UnitPrice)</MudText>
                             </MudTd>
                             <MudTd DataLabel="Total">
                                 <MudText Typo="Typo.body2" Color="Color.Success">
-                                        <strong>@TextHelpers.ToCurrency(context.TotalPrice)</strong></MudText>
+                                    <strong>@TextHelpers.ToCurrency(context.TotalPrice)</strong></MudText>
                             </MudTd>
                         </RowTemplate>
                     </MudTable>

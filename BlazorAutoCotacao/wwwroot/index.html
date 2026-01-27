@@ -4,7 +4,41 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://autocotacaoapi-latest.onrender.com %%API_CSP_HOST%% https://cloudflareinsights.com blob: data:; worker-src 'self' blob:;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:5154 %%API_CSP_HOST%% https://cloudflareinsights.com blob: data:; worker-src 'self' blob:;" />
+
+    <script>
+        // Ensure CSP connect-src includes the ApiBaseUrl from appsettings when running locally
+        (async function(){
+            try{
+                const candidates=['/appsettings.json','/appsettings.Development.json'];
+                let cfg;
+                for(const u of candidates){
+                    try{
+                        const res = await fetch(u, {cache: 'no-store'});
+                        if(res.ok){ cfg = await res.json(); break; }
+                    }catch(e){ /* ignore */ }
+                }
+                const meta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+                if(!meta) return;
+                let content = meta.getAttribute('content') || '';
+                // remove placeholder if present
+                content = content.replace(/%%API_CSP_HOST%%/g, '').replace(/\s+/g, ' ').trim();
+                if(cfg && cfg.ApiBaseUrl){
+                    let origin;
+                    try{ origin = new URL(cfg.ApiBaseUrl).origin; }catch(e){
+                        const m = cfg.ApiBaseUrl.match(/^(https?:\/\/[^/]+)/);
+                        if(m) origin = m[1];
+                    }
+                    if(origin && !content.includes(origin)){
+                        content = content.replace(/connect-src\s([^;]*)/, function(m, p1){
+                            return 'connect-src ' + p1 + ' ' + origin;
+                        });
+                    }
+                }
+                meta.setAttribute('content', content);
+            }catch(e){ /* noop */ }
+        })();
+    </script>
     <title>BlazorAutoCotacao</title>
     <base href="/" />
     <script>

@@ -21,6 +21,16 @@
                              Min="1"
                              Variant="Variant.Outlined"
                              Margin="Margin.Dense"/>
+            
+            <MudTextField @bind-Value="_model.Sku"
+                          Label="Sku"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
+            
+            <MudTextField @bind-Value="_model.Observation"
+                          Label="Observação"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"/>
         </MudForm>
     </DialogContent>
     <DialogActions>
@@ -50,13 +60,13 @@
     private MudForm? _form;
     private bool _isValid;
     private bool _saving;
-    private bool _isEdit => QuoteItemId.HasValue;
+    private bool IsEdit => QuoteItemId.HasValue;
     
-    private AddQuoteItemDto _model = new();
+    private readonly AddQuoteItemDto _model = new();
 
     protected override async Task OnInitializedAsync()
     {
-        if (_isEdit)
+        if (IsEdit)
         {
             try
             {
@@ -66,6 +76,8 @@
                 {
                     _model.Name = item.Name;
                     _model.Quantity = item.Quantity;
+                    _model.Sku = item.Sku;
+                    _model.Observation = item.Observation;
                 }
             }
             catch (Exception ex)
@@ -85,14 +97,16 @@
         {
             _saving = true;
             
-            if (_isEdit)
+            if (IsEdit)
             {
                 var updateDto = new UpdateQuoteItemDto
                 {
                     QuoteId = QuoteId,
                     ItemId = QuoteItemId!.Value,
                     Name = _model.Name,
-                    Quantity = _model.Quantity
+                    Quantity = _model.Quantity,
+                    Sku = _model.Sku,
+                    Observation = _model.Observation
                 };
                 await QuotesService.UpdateQuoteItemAsync(updateDto);
                 Snackbar.Add("Item atualizado com sucesso!", Severity.Success);
@@ -103,7 +117,9 @@
                 {
                     QuoteId = QuoteId,
                     Name = _model.Name,
-                    Quantity = _model.Quantity
+                    Quantity = _model.Quantity,
+                    Sku = _model.Sku,
+                    Observation = _model.Observation
                 };
                 await QuotesService.AddQuoteItemAsync(addDto);
                 Snackbar.Add("Item adicionado com sucesso!", Severity.Success);
