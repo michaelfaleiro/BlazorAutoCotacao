@@ -52,4 +52,9 @@ public interface IQuotesApi
 
     [Get("/api/quotes/{id}/summary")]
     Task<QuoteSummaryResponse> GetQuoteSummaryAsync(Guid id); // Mantido pois OpenAPI ainda usa path para summary
+
+    [Get("/api/quotes/dashboard/savings")]
+    Task<DashboardSavingsResponse> GetDashboardSavingsAsync(
+        [Query] DateTime? startDate = null,
+        [Query] DateTime? endDate = null);
 }

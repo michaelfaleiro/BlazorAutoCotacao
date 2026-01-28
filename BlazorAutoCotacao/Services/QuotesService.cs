@@ -85,4 +85,9 @@ public class QuotesService
     {
         return await _quotesApi.GetQuoteSummaryAsync(id);
     }
+
+    public async Task<DashboardSavingsResponse> GetDashboardSavingsAsync(DateTime? startDate = null, DateTime? endDate = null)
+    {
+        return await _quotesApi.GetDashboardSavingsAsync(startDate, endDate);
+    }
 }

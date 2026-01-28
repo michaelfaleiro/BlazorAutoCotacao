@@ -1,0 +1,123 @@
+@page "/cotacoes/relatorio-economia"
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@inject QuotesService QuotesService
+@inject NavigationManager Navigation
+@inject ISnackbar Snackbar
+
+<PageTitle>Relatório de Economia</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudText Typo="Typo.h5">Relatório de Economia</MudText>
+                <MudStack Row="true" Spacing="2">
+                    <MudDateRangePicker Label="Período" @bind-DateRange="_dateRange" />
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="LoadDataAsync">
+                        Filtrar
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+
+            @if (_loading)
+            {
+                <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+            }
+            else if (_savingsData != null)
+            {
+                <MudGrid Spacing="3" Class="mb-4">
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-3" Elevation="1" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Economia Total</MudText>
+                            <MudText Typo="Typo.h5" Style="color: white;"><strong>@TextHelpers.ToCurrency(_savingsData.TotalSavings)</strong></MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-3" Elevation="1" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Percentual Médio</MudText>
+                            <MudText Typo="Typo.h5" Style="color: white;"><strong>@_savingsData.TotalSavingsPercentage.ToString("F2")%</strong></MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-3" Elevation="1" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Valor Total</MudText>
+                            <MudText Typo="Typo.h5" Style="color: white;"><strong>@TextHelpers.ToCurrency(_savingsData.TotalQuoteValue)</strong></MudText>
+                        </MudPaper>
+                    </MudItem>
+                    <MudItem xs="12" sm="6" md="3">
+                        <MudPaper Class="pa-3" Elevation="1" Style="background: linear-gradient(135deg, #FA8BFF 0%, #2BD2FF 90%, #2BFF88 100%);">
+                            <MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Total de Cotações</MudText>
+                            <MudText Typo="Typo.h5" Style="color: white;"><strong>@_savingsData.TotalQuotes</strong></MudText>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+                <MudTable T="QuoteDetailDto" Items="_savingsData.QuoteDetails" Dense="true" Hover="true" 
+                          Striped="true" Breakpoint="Breakpoint.Sm">
+                    <HeaderContent>
+                        <MudTh>Modelo</MudTh>
+                        <MudTh>Placa</MudTh>
+                        <MudTh>Total da Cotação</MudTh>
+                        <MudTh>Economia</MudTh>
+                        <MudTh>% Economia</MudTh>
+                        <MudTh>Data</MudTh>
+                        <MudTh Style="text-align: right;">Ações</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Modelo">@TextHelpers.Capitalize(context.VehicleModel)</MudTd>
+                        <MudTd DataLabel="Placa">@context.VehicleLicencePlate.ToUpper()</MudTd>
+                        <MudTd DataLabel="Total">@TextHelpers.ToCurrency(context.QuoteTotal)</MudTd>
+                        <MudTd DataLabel="Economia">
+                            <MudText Typo="Typo.body2" Style="color: #667eea;">
+                                <strong>@TextHelpers.ToCurrency(context.Savings)</strong>
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="% Economia">
+                            <MudText Typo="Typo.body2" Style="color: #11998e;">
+                                <strong>@context.SavingsPercentage.ToString("F2")%</strong>
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Data">@TextHelpers.ToLocalString(context.CreatedAt)</MudTd>
+                        <MudTd DataLabel="Ações" Style="text-align: right;">
+                            <MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small"
+                                           OnClick="@(() => Navigation.NavigateTo($"cotacoes/{context.QuoteId}"))" 
+                                           aria-label="Ver detalhes" />
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private DashboardSavingsResponse? _savingsData;
+    private bool _loading = true;
+    private DateRange _dateRange = new DateRange(DateTime.Now.AddDays(-30), DateTime.Now);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        try
+        {
+            _loading = true;
+            _savingsData = await QuotesService.GetDashboardSavingsAsync(
+                _dateRange.Start, 
+                _dateRange.End
+            );
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Erro ao carregar dados: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+}

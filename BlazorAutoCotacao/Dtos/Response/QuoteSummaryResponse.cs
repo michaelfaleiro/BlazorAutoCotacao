@@ -9,4 +9,6 @@ public class QuoteSummaryResponse
     public string VehicleYearModel { get; set; } = string.Empty;
     public List<SupplierSummaryDto> Suppliers { get; set; } = new();
     public decimal GrandTotal { get; set; }
+    public decimal TotalSavings { get; set; }
+    public decimal SavingsPercentage { get; set; }
 }

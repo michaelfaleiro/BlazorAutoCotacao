@@ -54,6 +54,42 @@
 		</MudPaper>
 	</MudItem>
 
+	<MudItem xs="12" sm="6" md="4">
+		<MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+			<MudStack Spacing="1">
+				<MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Economia Total (últimos 30 dias)</MudText>
+				<MudText Typo="Typo.h5" Style="color: white;"><strong>@TextHelpers.ToCurrency(_totalSavings)</strong></MudText>
+				<MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.85);">
+					@_totalSavingsPercentage.ToString("F2")% de economia em @_quotesWithSavingsCount cotações
+				</MudText>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+
+	<MudItem xs="12" sm="6" md="4">
+		<MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+			<MudStack Spacing="1">
+				<MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Valor Total das Cotações</MudText>
+				<MudText Typo="Typo.h5" Style="color: white;"><strong>@TextHelpers.ToCurrency(_totalQuoteValue)</strong></MudText>
+				<MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.85);">
+					@_totalQuotesWithSavings cotações finalizadas
+				</MudText>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+
+	<MudItem xs="12" md="4">
+		<MudPaper Class="pa-4" Elevation="2" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+			<MudStack Spacing="1">
+				<MudText Typo="Typo.caption" Style="color: rgba(255,255,255,0.9);">Economia Média por Cotação</MudText>
+				<MudText Typo="Typo.h5" Style="color: white;"><strong>@TextHelpers.ToCurrency(_averageSavings)</strong></MudText>
+				<MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.85);">
+					@_averageSavingsPercentage.ToString("F2")% em média
+				</MudText>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+
 	<MudItem xs="12" md="6">
 		<MudPaper Class="pa-4" Elevation="1">
 			<MudText Typo="Typo.subtitle1">Proporção por Status</MudText>
@@ -103,6 +139,14 @@
 	private int _finalizadoCount = 0;
 	private int _canceladoCount = 0;
 
+	private decimal _totalSavings = 0;
+	private decimal _totalSavingsPercentage = 0;
+	private decimal _totalQuoteValue = 0;
+	private int _totalQuotesWithSavings = 0;
+	private int _quotesWithSavingsCount = 0;
+	private decimal _averageSavings = 0;
+	private decimal _averageSavingsPercentage = 0;
+
 	private string[] _chartLabels = Array.Empty<string>();
 	private double[] _chartData = Array.Empty<double>();
 
@@ -115,6 +159,7 @@
 	protected override async Task OnInitializedAsync()
 	{
 		await LoadDashboardAsync();
+		await LoadSavingsDataAsync();
 	}
 
 	private async Task LoadDashboardAsync()
@@ -150,6 +195,31 @@
 		catch
 		{
 			// silent fail for minimal dashboard
+		}
+	}
+
+	private async Task LoadSavingsDataAsync()
+	{
+		try
+		{
+			var savingsData = await QuotesService.GetDashboardSavingsAsync();
+			
+			_totalSavings = savingsData.TotalSavings;
+			_totalSavingsPercentage = savingsData.TotalSavingsPercentage;
+			_totalQuoteValue = savingsData.TotalQuoteValue;
+			_totalQuotesWithSavings = savingsData.TotalQuotes;
+			_quotesWithSavingsCount = savingsData.QuoteDetails.Count(q => q.Savings > 0);
+			
+			_averageSavings = _quotesWithSavingsCount > 0 
+				? savingsData.QuoteDetails.Where(q => q.Savings > 0).Average(q => q.Savings) 
+				: 0;
+			_averageSavingsPercentage = _quotesWithSavingsCount > 0 
+				? savingsData.QuoteDetails.Where(q => q.Savings > 0).Average(q => q.SavingsPercentage) 
+				: 0;
+		}
+		catch
+		{
+			// silent fail - economia não disponível
 		}
 	}
 }

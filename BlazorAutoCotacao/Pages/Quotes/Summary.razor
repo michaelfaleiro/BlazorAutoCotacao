@@ -114,6 +114,24 @@ else if (_summary != null)
                 </MudStack>
             </MudPaper>
         </MudItem>
+
+        @if (_summary.TotalSavings > 0)
+        {
+            <MudItem xs="12">
+                <MudPaper Class="pa-4" Elevation="3" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <MudStack Spacing="2">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.h6" Style="color: white;">Economia Total</MudText>
+                            <MudText Typo="Typo.h5" Style="color: white;"><strong>@TextHelpers.ToCurrency(_summary.TotalSavings)</strong></MudText>
+                        </MudStack>
+                        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                            <MudText Typo="Typo.body2" Style="color: rgba(255,255,255,0.9);">Percentual de Economia</MudText>
+                            <MudText Typo="Typo.h6" Style="color: white;"><strong>@_summary.SavingsPercentage.ToString("F2")%</strong></MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudPaper>
+            </MudItem>
+        }
     </MudGrid>
 }
 else
