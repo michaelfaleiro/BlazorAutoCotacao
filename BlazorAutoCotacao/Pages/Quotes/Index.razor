@@ -23,13 +23,17 @@
                       OnDebounceIntervalElapsed="OnSearch"
                       Immediate="false"
                       Clearable="true"/>
-        <MudButton Variant="Variant.Filled" 
-                   Color="Color.Success" 
-                   StartIcon="@Icons.Material.Filled.Add"
-                   OnClick="OpenCreateDialog"
-                   Size="Size.Small">
-            Nova Cotação
-        </MudButton>
+        <MudStack Row="true" Spacing="1">
+            <MudButton Variant="Variant.Outlined" Color="Color.Default" Size="Size.Small" StartIcon="@Icons.Material.Filled.Refresh"
+                       OnClick="ResetFilters">Limpar</MudButton>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Success" 
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateDialog"
+                       Size="Size.Small">
+                Nova Cotação
+            </MudButton>
+        </MudStack>
     </MudStack>
 
     <MudDataGrid T="GetAllQuotesResponse" 
@@ -51,13 +55,13 @@
                     @context.Item.VehicleLicencePlate.ToUpper()
                 </CellTemplate>
             </PropertyColumn>
-            <TemplateColumn Title="Status" Sortable="true" SortBy="@(x => x.Status)">
+            <PropertyColumn Property="x => x.Status" Title="Status" Sortable="true">
                 <CellTemplate>
                     <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(context.Item.Status)">
                         @context.Item.Status
                     </MudChip>
                 </CellTemplate>
-            </TemplateColumn>
+            </PropertyColumn>
             <TemplateColumn Title="Criado em" Sortable="true" SortBy="@(x => x.CreatedAt)" Hideable="true" Hidden="@(_isMobile)">
                 <CellTemplate>
                     @TextHelpers.ToLocalString(context.Item.CreatedAt, "dd/MM/yy HH:mm")
@@ -94,11 +98,39 @@
     private MudDataGrid<GetAllQuotesResponse>? _dataGrid;
     private string _searchString = string.Empty;
     private bool _isMobile = false;
+    private string? _statusFilter = null;
 
     protected override void OnInitialized()
     {
         // Simples detecção mobile - pode ser melhorado com JS Interop se necessário
         _isMobile = false;
+        // Parse status query parameter if present
+        try
+        {
+            var uri = new Uri(Navigation.Uri);
+            var query = uri.Query;
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var pairs = query.TrimStart('?').Split('&', StringSplitOptions.RemoveEmptyEntries);
+                foreach (var p in pairs)
+                {
+                    var kv = p.Split('=', 2);
+                    if (kv.Length == 2)
+                    {
+                        var key = Uri.UnescapeDataString(kv[0]);
+                        var val = Uri.UnescapeDataString(kv[1]);
+                        if (string.Equals(key, "status", StringComparison.OrdinalIgnoreCase))
+                        {
+                            _statusFilter = val;
+                        }
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // ignore parsing errors
+        }
     }
     private int _totalItems = 0;
     private int _currentPage = 0;
@@ -121,6 +153,18 @@
         }
     }
 
+    private async Task ResetFilters()
+    {
+        _searchString = string.Empty;
+        _statusFilter = null;
+        // remove query param from URL
+        Navigation.NavigateTo("/cotacoes", replace: true);
+        if (_dataGrid != null)
+        {
+            await _dataGrid.ReloadServerData();
+        }
+    }
+
     private async Task<GridData<GetAllQuotesResponse>> LoadServerData(GridState<GetAllQuotesResponse> state)
     {
         try
@@ -129,18 +173,25 @@
             if (state.SortDefinitions.Any())
             {
                 var sortDef = state.SortDefinitions.First();
-                orderBy = sortDef.SortBy switch
-                {
-                    "VehicleModel" => sortDef.Descending ? "vehicleModel_desc" : "vehicleModel",
-                    "VehicleLicencePlate" => sortDef.Descending ? "vehicleLicencePlate_desc" : "vehicleLicencePlate",
-                    "Status" => sortDef.Descending ? "status_desc" : "status",
-                    "CreatedAt" => sortDef.Descending ? "createdAt_desc" : "createdAt",
-                    _ => "createdAt"
-                };
+                var sortByRaw = sortDef.SortBy ?? string.Empty;
+                if (sortByRaw.Contains("VehicleModel", StringComparison.OrdinalIgnoreCase))
+                    orderBy = sortDef.Descending ? "vehicleModel_desc" : "vehicleModel";
+                else if (sortByRaw.Contains("VehicleLicencePlate", StringComparison.OrdinalIgnoreCase))
+                    orderBy = sortDef.Descending ? "vehicleLicencePlate_desc" : "vehicleLicencePlate";
+                else if (sortByRaw.Contains("Status", StringComparison.OrdinalIgnoreCase))
+                    orderBy = sortDef.Descending ? "status_desc" : "status";
+                else if (sortByRaw.Contains("CreatedAt", StringComparison.OrdinalIgnoreCase))
+                    orderBy = sortDef.Descending ? "createdAt_desc" : "createdAt";
+                else
+                    orderBy = "createdAt";
             }
 
             var response = await QuotesService.GetAllQuotesAsync(
                 search: string.IsNullOrWhiteSpace(_searchString) ? null : _searchString,
+                vehicleModel: null,
+                vehicleLicencePlate: null,
+                vehicleVin: null,
+                status: string.IsNullOrWhiteSpace(_statusFilter) ? null : _statusFilter,
                 orderBy: orderBy,
                 page: state.Page + 1,
                 pageSize: state.PageSize
@@ -189,10 +240,10 @@
     {
         return status?.ToLower() switch
         {
-            "pendente" => Color.Warning,
-            "aprovada" => Color.Success,
-            "rejeitada" => Color.Error,
-            "cancelada" => Color.Default,
+            "novo" => Color.Warning,
+            "parcial" => Color.Info,
+            "finalizado" => Color.Success,
+            "cancelado" => Color.Default,
             _ => Color.Info
         };
     }

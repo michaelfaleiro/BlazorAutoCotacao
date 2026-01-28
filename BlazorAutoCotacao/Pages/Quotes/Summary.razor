@@ -21,7 +21,7 @@ else if (_summary != null)
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                     <div style="display:flex; align-items:center;">
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Size="Size.Medium"
-                            OnClick="GoBackToDetails" Title="Voltar" />
+                            OnClick="GoBackToDetails" aria-label="Voltar" />
 
                         <MudText Typo="Typo.h5" Class="ml-2">Resumo da Cotação</MudText>
                     </div>
@@ -61,7 +61,7 @@ else if (_summary != null)
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                         <MudText Typo="Typo.h6">@TextHelpers.Capitalize(supplier.SupplierFantasyName)</MudText>
                         <MudIconButton Icon="@Icons.Material.Filled.PictureAsPdf" Color="Color.Error" Size="Size.Medium"
-                            OnClick="@(() => DownloadSupplierPdf(supplier.SupplierId))" Title="Download PDF deste fornecedor" />
+                            OnClick="@(() => DownloadSupplierPdf(supplier.SupplierId))" aria-label="Download PDF deste fornecedor" />
                     </MudStack>
 
                     <MudTable T="QuoteItemSummaryDto" Items="supplier.Items" Dense="true" Hover="true" Bordered="true"

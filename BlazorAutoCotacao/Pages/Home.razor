@@ -1,7 +1,155 @@
 ﻿@page "/"
+@using BlazorAutoCotacao.Dtos.Response
+@using BlazorAutoCotacao.Services
+@inject QuotesService QuotesService
+@inject NavigationManager Navigation
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<MudText Typo="Typo.h4" GutterBottom="true">Hello, world!</MudText>
+<MudText Typo="Typo.h4" Class="mb-4">Dashboard</MudText>
 
-Welcome to your new app.
+<MudGrid Spacing="3">
+	<MudItem xs="12" sm="6" md="3">
+		<MudPaper Class="pa-4" Elevation="1">
+			<MudText Typo="Typo.caption">Novo</MudText>
+			<MudText Typo="Typo.h5">@_novoCount</MudText>
+			<MudStack Row="true" Justify="Justify.FlexEnd">
+				<MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => Navigation.NavigateTo("cotacoes?status=novo"))">
+					Ver
+				</MudButton>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+	<MudItem xs="12" sm="6" md="3">
+		<MudPaper Class="pa-4" Elevation="1">
+			<MudText Typo="Typo.caption">Parcial</MudText>
+			<MudText Typo="Typo.h5">@_parcialCount</MudText>
+			<MudStack Row="true" Justify="Justify.FlexEnd">
+				<MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => Navigation.NavigateTo("cotacoes?status=parcial"))">
+					Ver
+				</MudButton>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+	<MudItem xs="12" sm="6" md="3">
+		<MudPaper Class="pa-4" Elevation="1">
+			<MudText Typo="Typo.caption">Finalizado</MudText>
+			<MudText Typo="Typo.h5">@_finalizadoCount</MudText>
+			<MudStack Row="true" Justify="Justify.FlexEnd">
+				<MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => Navigation.NavigateTo("cotacoes?status=finalizado"))">
+					Ver
+				</MudButton>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+	<MudItem xs="12" sm="6" md="3">
+		<MudPaper Class="pa-4" Elevation="1">
+			<MudText Typo="Typo.caption">Cancelado</MudText>
+			<MudText Typo="Typo.h5">@_canceladoCount</MudText>
+			<MudStack Row="true" Justify="Justify.FlexEnd">
+				<MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => Navigation.NavigateTo("cotacoes?status=cancelado"))">
+					Ver
+				</MudButton>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+
+	<MudItem xs="12" md="6">
+		<MudPaper Class="pa-4" Elevation="1">
+			<MudText Typo="Typo.subtitle1">Proporção por Status</MudText>
+			<MudChart ChartType="ChartType.Pie" InputData="@_chartData" InputLabels="@_chartLabels" Width="100%" Height="300px" />
+
+			<MudDivider Class="my-2" />
+			<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+				<MudText Typo="Typo.body2">Novo: <strong>@_novoCount</strong> (@_novoPct% )</MudText>
+				<MudText Typo="Typo.body2">Parcial: <strong>@_parcialCount</strong> (@_parcialPct% )</MudText>
+				<MudText Typo="Typo.body2">Finalizado: <strong>@_finalizadoCount</strong> (@_finalizadoPct% )</MudText>
+				<MudText Typo="Typo.body2">Cancelado: <strong>@_canceladoCount</strong> (@_canceladoPct% )</MudText>
+			</MudStack>
+		</MudPaper>
+	</MudItem>
+
+	<MudItem xs="12" md="6">
+		<MudPaper Class="pa-4" Elevation="1">
+			<MudText Typo="Typo.subtitle1">Últimas Cotações</MudText>
+			<MudTable Dense="true" Items="_latestQuotes">
+				<HeaderContent>
+					<MudTh>Modelo</MudTh>
+					<MudTh>Placa</MudTh>
+					<MudTh>Status</MudTh>
+					<MudTh>Data</MudTh>
+					<MudTh Style="text-align: right;">Ações</MudTh>
+				</HeaderContent>
+				<RowTemplate>
+					<MudTd>@context.VehicleModel</MudTd>
+					<MudTd>@context.VehicleLicencePlate.ToUpper()</MudTd>
+					<MudTd>@context.Status</MudTd>
+					<MudTd>@TextHelpers.ToLocalString(context.CreatedAt)</MudTd>
+					<MudTd Style="text-align: right;">
+						<MudTooltip Text="Ver detalhes">
+							<MudIconButton Icon="@Icons.Material.Filled.Visibility" Color="Color.Info" Size="Size.Small"
+										   OnClick="@(() => Navigation.NavigateTo($"cotacoes/{context.Id}"))" />
+						</MudTooltip>
+					</MudTd>
+				</RowTemplate>
+			</MudTable>
+		</MudPaper>
+	</MudItem>
+</MudGrid>
+
+@code{
+	private int _novoCount = 0;
+	private int _parcialCount = 0;
+	private int _finalizadoCount = 0;
+	private int _canceladoCount = 0;
+
+	private string[] _chartLabels = Array.Empty<string>();
+	private double[] _chartData = Array.Empty<double>();
+
+	private IEnumerable<GetAllQuotesResponse> _latestQuotes = Array.Empty<GetAllQuotesResponse>();
+	private double _novoPct = 0;
+	private double _parcialPct = 0;
+	private double _finalizadoPct = 0;
+	private double _canceladoPct = 0;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadDashboardAsync();
+	}
+
+	private async Task LoadDashboardAsync()
+	{
+		try
+		{
+			var all = await QuotesService.GetAllQuotesAsync(orderBy: "createdAt", page: 1, pageSize: 100);
+			var data = all.Data;
+
+			_novoCount = data.Count(x => x.Status?.ToLower() == "novo");
+			_parcialCount = data.Count(x => x.Status?.ToLower() == "parcial");
+			_finalizadoCount = data.Count(x => x.Status?.ToLower() == "finalizado");
+			_canceladoCount = data.Count(x => x.Status?.ToLower() == "cancelado");
+
+			var total = _novoCount + _parcialCount + _finalizadoCount + _canceladoCount;
+			double pct(double v) => total == 0 ? 0 : Math.Round((v / (double)total) * 100, 1);
+
+			_chartLabels = new[] {
+				$"Novo ({pct(_novoCount)}%)",
+				$"Parcial ({pct(_parcialCount)}%)",
+				$"Finalizado ({pct(_finalizadoCount)}%)",
+				$"Cancelado ({pct(_canceladoCount)}%)"
+			};
+
+			_chartData = new[] { (double)_novoCount, (double)_parcialCount, (double)_finalizadoCount, (double)_canceladoCount };
+			_novoPct = pct(_novoCount);
+			_parcialPct = pct(_parcialCount);
+			_finalizadoPct = pct(_finalizadoCount);
+			_canceladoPct = pct(_canceladoCount);
+
+			_latestQuotes = data.OrderByDescending(x => x.CreatedAt).Take(8);
+		}
+		catch
+		{
+			// silent fail for minimal dashboard
+		}
+	}
+}

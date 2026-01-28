@@ -21,7 +21,7 @@ else if (_quote != null)
                     Class="mb-3">
                     <div style="display:flex; align-items:center; gap:8px;">
                         <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Color="Color.Default" Size="Size.Medium"
-                            OnClick="GoBack" Title="Voltar" />
+                            OnClick="GoBack" aria-label="Voltar" />
                         <div style="margin-left:0;">
                             <MudText Typo="Typo.h5">Cotação #@_quote.Id.ToString().Substring(0, 8)</MudText>
                             <MudText Typo="Typo.caption" Color="Color.Secondary">
@@ -93,6 +93,7 @@ else if (_quote != null)
                     <HeaderContent>
                         <MudTh Class="d-none d-sm-table-cell"></MudTh>
                         <MudTh>Descrição</MudTh>
+                        <MudTh Class="d-none d-sm-table-cell">SKU</MudTh>
                         <MudTh Class="d-none d-sm-table-cell">Observação</MudTh>
                         <MudTh>Quantidade</MudTh>
                         <MudTh Class="d-none d-sm-table-cell">Adicionado</MudTh>
@@ -106,7 +107,7 @@ else if (_quote != null)
                                 <MudIconButton
                                     Icon="@(_expandedItems.Contains(context.Id) ? Icons.Material.Filled.KeyboardArrowUp : Icons.Material.Filled.KeyboardArrowDown)"
                                     Size="Size.Small" OnClick="@(() => ToggleExpand(context.Id))"
-                                    Title="@(_expandedItems.Contains(context.Id) ? "Recolher" : "Expandir")" />
+                                    aria-label="@(_expandedItems.Contains(context.Id) ? "Recolher" : "Expandir")" />
                             </MudTooltip>
                         </MudTd>
                         <MudTd DataLabel="Item">
@@ -117,12 +118,17 @@ else if (_quote != null)
                                     <MudText Typo="Typo.caption" Color="Color.Info">@context.SupplierPrices.Count preços
                                     </MudText>
                                 }
-                                <MudText Typo="Typo.caption" Class="d-sm-none">@context.Observation</MudText>
+                                <MudText Typo="Typo.caption" Class="d-sm-none">SKU: @context.Sku.ToUpper()</MudText>
+                                <MudText Typo="Typo.caption" Class="d-sm-none">@TextHelpers.CapitalizeInitials(context.Observation)</MudText>
                             </MudStack>
                         </MudTd>
 
+                        <MudTd DataLabel="SKU" Class="d-none d-sm-table-cell">
+                            <MudText Typo="Typo.body2">@context.Sku.ToUpper()</MudText>
+                        </MudTd>
+
                         <MudTd DataLabel="Observação" Class="d-none d-sm-table-cell">
-                            <MudText Typo="Typo.body2">@context.Observation</MudText>
+                            <MudText Typo="Typo.body2">@TextHelpers.CapitalizeInitials(context.Observation)</MudText>
                         </MudTd>
                         <MudTd DataLabel="Quantidade">
                             <MudText Typo="Typo.body2"><strong>@context.Quantity</strong></MudText>
@@ -183,6 +189,7 @@ else if (_quote != null)
                                                 <HeaderContent>
                                                     <MudTh>Fornecedor</MudTh>
                                                     <MudTh Class="d-none d-sm-table-cell">Marca</MudTh>
+                                                    <MudTh Class="d-none d-sm-table-cell">SKU</MudTh>
                                                     <MudTh Class="d-none d-sm-table-cell">Observação</MudTh>
                                                     <MudTh>Quantidade</MudTh>
                                                     <MudTh>Preço</MudTh>
@@ -192,11 +199,15 @@ else if (_quote != null)
                                                     <MudTd DataLabel="Fornecedor">
                                                         <MudText Typo="Typo.body2">@TextHelpers.Capitalize(price.Supplier.FantasyName)</MudText>
                                                         <MudText Typo="Typo.caption" Class="d-sm-none">@TextHelpers.Capitalize(price.Brand)</MudText>
-                                                        <MudText Typo="Typo.caption" Class="d-sm-none">@price.Observation</MudText>
+                                                        <MudText Typo="Typo.caption" Class="d-sm-none">SKU: @price.Sku.ToUpper()</MudText>
+                                                        <MudText Typo="Typo.caption" Class="d-sm-none">@TextHelpers.CapitalizeInitials(price.Observation)</MudText>
                                                     </MudTd>
                                                     <MudTd DataLabel="Marca" Class="d-none d-sm-table-cell">@TextHelpers.Capitalize(price.Brand)</MudTd>
+                                                    <MudTd DataLabel="SKU" Class="d-none d-sm-table-cell">
+                                                        <MudText Typo="Typo.body2">@price.Sku.ToUpper()</MudText>
+                                                    </MudTd>
                                                     <MudTd DataLabel="Observação" Class="d-none d-sm-table-cell">
-                                                        <MudText Typo="Typo.body2">@price.Observation</MudText>
+                                                        <MudText Typo="Typo.body2">@TextHelpers.CapitalizeInitials(price.Observation)</MudText>
                                                     </MudTd>
                                                     <MudTd DataLabel="Quantidade">
                                                         <MudText Typo="Typo.body2"><strong>@price.Quantity</strong></MudText>
@@ -218,10 +229,10 @@ else if (_quote != null)
                                                                 </MudButton>
                                                             </MudTooltip>
                                                             <MudTooltip Text="Remover">
-                                                                <MudIconButton Icon="@Icons.Material.Filled.RemoveShoppingCart"
-                                                                    Size="Size.Small" Color="Color.Error" Variant="Variant.Filled"
-                                                                    OnClick="@(() => SelectWinner(price.Id))"
-                                                                    Class="d-inline-flex d-sm-none" Title="Remover seleção" />
+                                                                        <MudIconButton Icon="@Icons.Material.Filled.RemoveShoppingCart"
+                                                                            Size="Size.Small" Color="Color.Error" Variant="Variant.Filled"
+                                                                            OnClick="@(() => SelectWinner(price.Id))"
+                                                                            Class="d-inline-flex d-sm-none" aria-label="Remover seleção" />
                                                             </MudTooltip>
                                                         }
                                                         else
@@ -238,7 +249,7 @@ else if (_quote != null)
                                                                 <MudIconButton Icon="@Icons.Material.Filled.ShoppingCart"
                                                                     Size="Size.Small" Color="Color.Success" Variant="Variant.Filled"
                                                                     OnClick="@(() => SelectWinner(price.Id))"
-                                                                    Class="d-inline-flex d-sm-none" Title="Selecionar como vencedor" />
+                                                                    Class="d-inline-flex d-sm-none" aria-label="Selecionar como vencedor" />
                                                             </MudTooltip>
                                                         }
 

@@ -11,6 +11,21 @@ namespace BlazorAutoCotacao.Helpers
             return char.ToUpper(input[0]) + (input.Length > 1 ? input.Substring(1) : string.Empty);
         }
 
+        public static string CapitalizeInitials(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return input ?? string.Empty;
+            input = input.Trim().ToLower();
+            try
+            {
+                return System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(input);
+            }
+            catch
+            {
+                // Fallback: capitalize first char only
+                return Capitalize(input);
+            }
+        }
+
         public static string ToLocalString(DateTime dateTime, string format = "dd/MM/yyyy HH:mm")
         {
             return dateTime.ToLocalTime().ToString(format);
